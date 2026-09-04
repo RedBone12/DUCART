@@ -33,12 +33,13 @@ function renderProducts(props = {}) {
 describe("Products", () => {
   test("renders product cards, images, fallback content, and detail links", () => {
     renderProducts();
+    const serverUrl = process.env.REACT_APP_SERVER || "http://localhost:8080";
 
     expect(screen.getByText("Premium Dog Food")).toBeInTheDocument();
     expect(screen.getByText("Cat Toy")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Premium Dog Food" })).toHaveAttribute(
       "src",
-      `${process.env.REACT_APP_SERVER}/uploads/products/dog-food.jpg`,
+      `${serverUrl}/uploads/products/dog-food.jpg`,
     );
     expect(screen.getByText("No Image")).toBeInTheDocument();
 
