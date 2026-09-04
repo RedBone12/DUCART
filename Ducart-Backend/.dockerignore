@@ -1,0 +1,12 @@
+target/
+uploads/
+.git/
+.github/
+.idea/
+.vscode/
+*.iml
+*.log
+.env
+.env.*
+Dockerfile*
+README*

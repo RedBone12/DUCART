@@ -1,0 +1,25 @@
+# Local environment files and secrets
+.env
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Backend build output
+Ducart-Backend/target/
+
+# Frontend dependencies, build output, and coverage
+Ducart-Frontend/node_modules/
+Ducart-Frontend/build/
+Ducart-Frontend/coverage/
+
+# IDE and operating-system files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local logs
+*.log

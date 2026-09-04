@@ -1,0 +1,12 @@
+node_modules/
+build/
+coverage/
+.git/
+.github/
+.idea/
+.vscode/
+*.log
+.env
+.env.*
+Dockerfile*
+README*
