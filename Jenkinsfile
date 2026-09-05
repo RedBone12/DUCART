@@ -30,5 +30,13 @@ pipeline {
                 }
             }
         }
+
+        stage('Docker Build') {
+            steps {
+                bat 'docker version'
+                bat 'docker compose version'
+                bat 'docker compose --env-file .env.example build backend frontend'
+            }
+        }
     }
 }
