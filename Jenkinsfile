@@ -38,5 +38,47 @@ pipeline {
                 bat 'docker compose --env-file .env.example build backend frontend'
             }
         }
+
+        stage('Deploy') {
+            steps {
+                bat 'docker compose -p ducart_resume_ready --env-file .env.example up -d --no-build --wait --wait-timeout 180'
+                bat 'docker compose -p ducart_resume_ready --env-file .env.example ps'
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                powershell '''
+                    $ErrorActionPreference = 'Stop'
+                    $targets = @(
+                        'http://localhost:3000',
+                        'http://localhost:8080/product'
+                    )
+
+                    foreach ($target in $targets) {
+                        $ready = $false
+
+                        for ($attempt = 1; $attempt -le 24; $attempt++) {
+                            try {
+                                $response = Invoke-WebRequest -Uri $target -UseBasicParsing -TimeoutSec 10
+                                if ($response.StatusCode -eq 200) {
+                                    Write-Host "$target returned HTTP 200"
+                                    $ready = $true
+                                    break
+                                }
+                            } catch {
+                                Write-Host "$target is not ready (attempt $attempt of 24)"
+                            }
+
+                            Start-Sleep -Seconds 5
+                        }
+
+                        if (-not $ready) {
+                            throw "$target did not return HTTP 200"
+                        }
+                    }
+                '''
+            }
+        }
     }
 }
