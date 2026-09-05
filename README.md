@@ -51,29 +51,46 @@ DUCART is a role-based online shopping platform with a React frontend, Spring Bo
 
 ### Requirements
 
-- [Git](https://git-scm.com/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Java 17
+- Node.js 18 or later with npm
+- MySQL 8
 
-Clone and start the complete application:
+Download the repository as a ZIP file and extract it, then start your local MySQL server. The backend creates the `ducart_db1` database automatically.
 
-```bash
-git clone https://github.com/RedBone12/DUCART.git
-cd DUCART
+Start the backend from the extracted project folder:
+
+```cmd
+cd Ducart-Backend
+mvnw.cmd spring-boot:run
+```
+
+The default database login is `root` with no password. If your MySQL installation uses a password, set it before starting the backend:
+
+```cmd
+set DB_USERNAME=root
+set DB_PASSWORD=your_mysql_password
+mvnw.cmd spring-boot:run
+```
+
+Open a second terminal and start the frontend:
+
+```cmd
+cd Ducart-Frontend
+npm install
+npm start
+```
+
+The development configuration automatically connects the frontend to the backend at `http://localhost:8080`.
+
+Open <http://localhost:3000> in your browser.
+
+### Optional Docker Setup
+
+If Docker Desktop is installed, the complete application can instead be started with one command:
+
+```cmd
 docker compose --env-file .env.example up -d --build --wait
 ```
-
-Open:
-
-- Frontend: <http://localhost:3000>
-- Product API: <http://localhost:8080/product>
-
-Stop the application:
-
-```bash
-docker compose --env-file .env.example down
-```
-
-> The values in `.env.example` are for local demonstration only. Create a private `.env` with new passwords and a new JWT secret before any public deployment.
 
 ## CI/CD Pipeline
 
