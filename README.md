@@ -2,6 +2,14 @@
 
 Full-stack e-commerce application built with React, Spring Boot, MySQL, Docker, and Jenkins.
 
+## GitHub Pages frontend
+
+[Open the frontend](https://redbone12.github.io/DUCART/). GitHub Pages hosts the frontend only; live catalogue data, authentication, and other API features require a separately deployed backend.
+
+In repository **Settings → Pages**, select **GitHub Actions** as the source. The workflow in `.github/workflows/pages.yml` installs frontend dependencies, builds React, and publishes `Ducart-Frontend/build` on frontend changes pushed to `main` (or a manual Actions run).
+
+The Pages build uses the repository base path for assets and hash routes (for example, `#/shop`) so refreshing a page works on static hosting. Local development keeps browser routes. If a backend is deployed later, set the repository Actions variable `REACT_APP_SERVER` to its HTTPS URL, allow the Pages origin in backend CORS, and rebuild. Never put secrets in frontend variables.
+
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)

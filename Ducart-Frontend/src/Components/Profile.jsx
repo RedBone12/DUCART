@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { authJsonHeaders } from "../config/auth";
 
 function getProfileImage(pic) {
-  if (!pic) return "/img/noimage.png";
+  if (!pic) return `${process.env.PUBLIC_URL || ""}/img/noimage.png`;
 
   if (pic.startsWith("http")) {
     return pic;
@@ -60,12 +60,12 @@ export default function Profile(props) {
             width="100%"
             alt="Profile"
             onError={(e) => {
-              e.currentTarget.src = "/img/noimage.png";
+              e.currentTarget.src = `${process.env.PUBLIC_URL || ""}/img/noimage.png`;
             }}
           />
         ) : (
           <img
-            src="/img/noimage.png"
+            src={`${process.env.PUBLIC_URL || ""}/img/noimage.png`}
             height={props.title === "Admin Profile" ? 265 : 430}
             width="100%"
             alt="No Profile"

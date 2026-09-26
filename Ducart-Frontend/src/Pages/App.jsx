@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
@@ -56,8 +56,9 @@ import AdminCheckoutShow from "../Admin/Checkout/AdminCheckoutShow";
 import ForgotPassword from "./ForgotPassword";
 
 export default function App() {
+  const Router = process.env.REACT_APP_GITHUB_PAGES === "true" ? HashRouter : BrowserRouter;
   return (
-    <BrowserRouter>
+    <Router>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -154,6 +155,6 @@ export default function App() {
         <Route path="/*" element={<ErrorPage />} />
       </Routes>
       <Footer />
-    </BrowserRouter>
+    </Router>
   );
 }
