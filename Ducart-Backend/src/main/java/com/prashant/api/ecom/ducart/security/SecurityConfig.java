@@ -84,7 +84,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/user/login").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/user").permitAll()
-                                                .requestMatchers(HttpMethod.PUT, "/user/forgot-password").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/user/forgot-password", "/user/reset-password").permitAll()
                                                 .requestMatchers("/uploads/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/product/**", "/brand/**", "/maincategory/**",

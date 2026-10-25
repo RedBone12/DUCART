@@ -4,8 +4,15 @@ import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import Cart from "./Cart";
-import { CREATE_CHECKOUT, DELETE_CART, UPDATE_CART } from "../Redux/Constants";
+import { DELETE_CART, UPDATE_CART } from "../Redux/Constants";
+import { submitOrder } from "../config/checkout";
 import { formatCurrency } from "../config/siteConfig";
+
+jest.mock("../config/checkout", () => ({
+  ...jest.requireActual("../config/checkout"),
+  submitOrder: jest.fn(),
+}));
+
 
 const cartItem = {
   id: 10,
@@ -60,6 +67,11 @@ function renderCart({
 describe("Cart", () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    Object.defineProperty(window, "crypto", {
+      configurable: true, value: { randomUUID: jest.fn(() => "test-key-12345678") },
+    });
+    submitOrder.mockReset();
   });
 
   afterEach(() => {
@@ -180,51 +192,52 @@ describe("Cart", () => {
     );
   });
 
-  test("places a valid demo-card order and navigates to confirmation", async () => {
+  test("sends only IDs and quantities and waits for server confirmation", async () => {
     localStorage.setItem("username", "buyer");
+    let resolve;
+    submitOrder.mockImplementation(() => new Promise((done) => { resolve = done; }));
     const { dispatchSpy } = renderCart({ title: "Checkout" });
-    await screen.findByRole("button", { name: "Place Order" });
-    dispatchSpy.mockClear();
-
-    fireEvent.change(screen.getByRole("combobox"), {
-      target: { value: "Card Demo" },
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Card Demo" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Place Order" }));
+    expect(submitOrder).toHaveBeenCalledWith({
+      paymentMode: "Card Demo", idempotencyKey: "test-key-12345678",
+      products: [{ productId: 1, qty: 1 }],
     });
-    fireEvent.click(screen.getByRole("button", { name: "Place Order" }));
-
+    expect(screen.getByRole("button", { name: "Placing Order..." })).toBeDisabled();
+    expect(screen.queryByText("Confirmation page")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Placing Order..." }));
+    expect(submitOrder).toHaveBeenCalledTimes(1);
+    resolve({ id: 7, total: 28.99 });
     expect(await screen.findByText("Confirmation page")).toBeInTheDocument();
-    expect(dispatchSpy).toHaveBeenCalledWith({
-      type: CREATE_CHECKOUT,
-      payload: expect.objectContaining({
-        user: "buyer",
-        paymentMode: "Card Demo",
-        paymentStatus: "Paid (Demo)",
-        subtotal: 24,
-        shipping: 4.99,
-        total: 28.99,
-        date: expect.any(String),
-        products: [expect.objectContaining({ id: 10 })],
-      }),
-    });
+    expect(dispatchSpy).toHaveBeenCalledWith({ type: DELETE_CART, payload: { id: 10 } });
   });
 
-  test("blocks checkout when requested quantity exceeds current stock", async () => {
-    const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
-    const { dispatchSpy } = renderCart({
-      cart: [{ ...cartItem, qty: 2, total: 48 }],
-      products: [{ ...product, stockQuantity: 1 }],
-      title: "Checkout",
-    });
-    await screen.findByRole("button", { name: "Place Order" });
+  test("server rejection keeps the cart and retries with the same key", async () => {
+    submitOrder.mockRejectedValueOnce(new Error("Insufficient stock"))
+      .mockResolvedValueOnce({ id: 8, total: 28.99 });
+    const { dispatchSpy } = renderCart({ title: "Checkout" });
     dispatchSpy.mockClear();
-
-    fireEvent.click(screen.getByRole("button", { name: "Place Order" }));
-
-    expect(alertSpy).toHaveBeenCalledWith(
-      "Premium Dog Food has only 1 items left in stock",
-    );
-    expect(dispatchSpy).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: CREATE_CHECKOUT }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Place Order" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Insufficient stock");
     expect(screen.queryByText("Confirmation page")).not.toBeInTheDocument();
+    expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: DELETE_CART }));
+    fireEvent.click(screen.getByRole("button", { name: "Place Order" }));
+    expect(await screen.findByText("Confirmation page")).toBeInTheDocument();
+    expect(submitOrder.mock.calls[0][0].idempotencyKey).toEqual(submitOrder.mock.calls[1][0].idempotencyKey);
+  });
+
+  test("a missing catalogue product does not send an order", async () => {
+    renderCart({ title: "Checkout", products: [] });
+    fireEvent.click(await screen.findByRole("button", { name: "Place Order" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("was not found");
+    expect(submitOrder).not.toHaveBeenCalled();
+  });
+
+  test("uses the saved product ID even when the catalogue name has changed", async () => {
+    submitOrder.mockResolvedValue({ id: 10 });
+    renderCart({ title: "Checkout", cart: [{ ...cartItem, productId: 42 }], products: [] });
+    fireEvent.click(await screen.findByRole("button", { name: "Place Order" }));
+    expect(await screen.findByText("Confirmation page")).toBeInTheDocument();
+    expect(submitOrder).toHaveBeenCalledWith(expect.objectContaining({ products: [{ productId: 42, qty: 1 }] }));
   });
 });

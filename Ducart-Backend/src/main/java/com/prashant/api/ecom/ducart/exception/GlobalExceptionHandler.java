@@ -13,6 +13,15 @@ import org.springframework.validation.FieldError;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> unreadableRequest(Exception ex) {
+        return build(HttpStatus.BAD_REQUEST, "Invalid request body");
+    }
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Map<String, Object>> tooManyRequests(TooManyRequestsException ex) {
+        ResponseEntity<Map<String, Object>> body = build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "900").body(body.getBody());
+    }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> badRequest(BadRequestException ex) {

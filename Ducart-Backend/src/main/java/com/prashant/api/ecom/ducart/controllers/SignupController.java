@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
-import com.prashant.api.ecom.ducart.modal.ForgotPasswordDTO;
+import com.prashant.api.ecom.ducart.modal.UserResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
@@ -52,35 +52,29 @@ public class SignupController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        return ResponseEntity.ok(userService.findAll().stream().map(UserResponseDTO::from).toList());
     }
 
     @GetMapping("/{userid}")
     @PreAuthorize("hasRole('ADMIN') or #userid == authentication.details")
-    public ResponseEntity<User> getUserById(@PathVariable Long userid) {
-        return ResponseEntity.ok(userService.findById(userid));
-    }
-
-    @PutMapping("/forgot-password")
-    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody ForgotPasswordDTO dto) {
-        userService.resetPassword(dto);
-        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long userid) {
+        return ResponseEntity.ok(UserResponseDTO.from(userService.findById(userid)));
     }
 
     @PutMapping(value = "/{userid}", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ADMIN') or #userid == authentication.details")
-    public ResponseEntity<User> updateProfile(@PathVariable Long userid,
+    public ResponseEntity<UserResponseDTO> updateProfile(@PathVariable Long userid,
             @RequestPart("data") String jsonData,
             @RequestPart(value = "pic", required = false) MultipartFile file) throws Exception {
         ProfileDTO profileDTO = objectMapper.readValue(jsonData, ProfileDTO.class);
-        return ResponseEntity.ok(userService.updateProfile(userid, profileDTO, file));
+        return ResponseEntity.ok(UserResponseDTO.from(userService.updateProfile(userid, profileDTO, file)));
     }
 
     @PutMapping("/{userid}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable Long userid, @RequestBody User user) {
-        return ResponseEntity.ok(userService.update(userid, user));
+    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long userid, @RequestBody User user) {
+        return ResponseEntity.ok(UserResponseDTO.from(userService.update(userid, user)));
     }
 
     @DeleteMapping("/{userid}")

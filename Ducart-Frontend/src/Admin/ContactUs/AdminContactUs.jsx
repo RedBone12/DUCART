@@ -9,7 +9,7 @@ import 'datatables.net';
 import Sidebar from '../../Components/Sidebar'
 import HeroSection from '../../Components/HeroSection'
 
-import { deleteContactUs, getContactUs, updateContactUs } from "../../Redux/ActionCreators/ContactUsActionCreators"
+import { deleteContactUs, getContactUs } from "../../Redux/ActionCreators/ContactUsActionCreators"
 import { Link } from 'react-router-dom';
 export default function AdminContactUs() {
   let [data, setData] = useState([])
@@ -20,27 +20,17 @@ export default function AdminContactUs() {
   function deleteRecord(id) {
     if (window.confirm("Are You Sure to Delete that Item : ")) {
       dispatch(deleteContactUs({ id: id }))
-      getAPIData()
+      dispatch(getContactUs());
     }
   }
 
-  function getAPIData() {
-    dispatch(getContactUs())
+  useEffect(() => { dispatch(getContactUs()); }, [dispatch]);
 
-    if (ContactUsStateData.length)
-      setData(ContactUsStateData)
-    else
-      setData([])
-
-    let time = setTimeout(() => {
-      $('#DataTable').DataTable()
-    }, 500);
-    return time
-  }
   useEffect(() => {
-    let time = getAPIData()
-    return () => clearTimeout(time)
-  }, [ContactUsStateData.length])
+    setData(ContactUsStateData);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => clearTimeout(timer);
+  }, [ContactUsStateData]);
 
   return (
     <>
@@ -119,11 +109,11 @@ export default function AdminContactUs() {
 //         }
 //       })
 //       response = await response.json()
-//       getAPIData()
+//       dispatch(getContactUs());
 //     }
 //   }
 
-//   async function getAPIData() {
+//   async function dispatch(getContactUs()); {
 //     let response = await fetch(`${process.env.REACT_APP_SERVER}/contactus`, {
 //       method: "GET",
 //       headers: {
@@ -142,7 +132,7 @@ export default function AdminContactUs() {
 //     return time
 //   }
 //   useEffect(() => {
-//     let time = getAPIData()
+//     let time = dispatch(getContactUs());
 //     return () => clearTimeout(time)
 //   }, [])
 

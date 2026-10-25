@@ -194,7 +194,7 @@ describe("Admin product CRUD", () => {
     const replacement = new File(["new image"], "replacement.png", {
       type: "image/png",
     });
-    fireEvent.change(document.getElementsByName("pic")[0], {
+    fireEvent.change(screen.getByLabelText("Product pictures"), {
       target: { files: [replacement] },
     });
     fireEvent.change(screen.getAllByRole("combobox")[3], {
@@ -255,7 +255,7 @@ describe("Admin product CRUD", () => {
       "/admin/product/update/:id",
     );
     const picture = await screen.findByRole("img", {
-      name: "Remove Premium Dog Food picture 1",
+      name: "Remove Premium Dog Food 1",
     });
     fireEvent.click(picture);
     expect(

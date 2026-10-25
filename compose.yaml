@@ -24,6 +24,14 @@ services:
       DB_USERNAME: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      PASSWORD_RESET_FRONTEND_URL: ${PASSWORD_RESET_FRONTEND_URL:-http://localhost:3000/forgot-password}
+      PASSWORD_RESET_MAIL_FROM: ${PASSWORD_RESET_MAIL_FROM:-no-reply@ducart.local}
     ports:
       - "8080:8080"
     volumes:
@@ -42,6 +50,13 @@ services:
       - "3000:80"
     depends_on:
       - backend
+
+  mailpit:
+    image: axllent/mailpit:v1
+    profiles: [mail]
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
 
 volumes:
   mysql-data:

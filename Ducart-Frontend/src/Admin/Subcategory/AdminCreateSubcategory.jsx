@@ -135,7 +135,7 @@ export default function AdminCreateSubcategory() {
                   <label>Pic*</label>
                   <input
                     type="file"
-                    name="pic"
+                    name="pic" aria-label="Catalog picture"
                     onChange={getInputData}
                     className={`form-control border-3 ${
                       show && errorMessage.pic

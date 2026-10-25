@@ -6,7 +6,6 @@ import com.prashant.api.ecom.ducart.exception.BadRequestException;
 import com.prashant.api.ecom.ducart.exception.ConflictException;
 import com.prashant.api.ecom.ducart.exception.GlobalExceptionHandler;
 import com.prashant.api.ecom.ducart.exception.ResourceNotFoundException;
-import com.prashant.api.ecom.ducart.modal.ForgotPasswordDTO;
 import com.prashant.api.ecom.ducart.modal.ProfileDTO;
 import com.prashant.api.ecom.ducart.modal.SignupDTO;
 import com.prashant.api.ecom.ducart.security.JwtService;
@@ -285,39 +284,6 @@ class SignupControllerTest {
     }
 
     @Test
-    void forgotPassword_whenRequestIsValid_shouldReturn200() throws Exception {
-        ForgotPasswordDTO request = new ForgotPasswordDTO("buyer", "1234567890", "newPassword123");
-
-        when(userService.resetPassword(any(ForgotPasswordDTO.class)))
-                .thenReturn(user(1L, "buyer", "Buyer"));
-
-        mockMvc.perform(put("/user/forgot-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Password reset successfully"));
-
-        verify(userService).resetPassword(any(ForgotPasswordDTO.class));
-    }
-
-    @Test
-    void forgotPassword_whenUserDoesNotExist_shouldReturn404() throws Exception {
-        ForgotPasswordDTO request = new ForgotPasswordDTO("ghost", "1234567890", "newPassword123");
-
-        when(userService.resetPassword(any(ForgotPasswordDTO.class)))
-                .thenThrow(new ResourceNotFoundException("User not found"));
-
-        mockMvc.perform(put("/user/forgot-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("User not found"));
-
-        verify(userService).resetPassword(any(ForgotPasswordDTO.class));
-    }
-
-    @Test
     void updateProfile_whenOwnerAndMultipartRequestIsValid_shouldReturn200() throws Exception {
         ProfileDTO dto = new ProfileDTO("New Name", "1234567890", "New Address", "Galway", "Connacht", "H91", null);
         User updated = user(1L, "buyer", "Buyer");
@@ -436,7 +402,6 @@ class SignupControllerTest {
                             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.POST, "/user").permitAll()
-                            .requestMatchers(HttpMethod.PUT, "/user/forgot-password").permitAll()
                             .requestMatchers("/user", "/user/**").authenticated()
                             .anyRequest().permitAll())
                     .build();

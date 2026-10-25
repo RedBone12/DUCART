@@ -46,7 +46,7 @@ export default function About() {
                 <img
                   className="img-fluid"
                   src="img/banner4.jpg"
-                  alt="Banner Image"
+                  alt="Shopping banner"
                 />
               </div>
             </div>

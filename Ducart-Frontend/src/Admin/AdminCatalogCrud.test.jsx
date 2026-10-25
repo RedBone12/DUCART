@@ -62,19 +62,19 @@ function renderPage(element, route, pattern = route, overrides = {}) {
       </MemoryRouter>
     </Provider>,
   );
-  return dispatchSpy;
+  return { dispatchSpy };
 }
 
 function uploadPicture() {
   const picture = new File(["image"], "picture.png", { type: "image/png" });
-  fireEvent.change(document.getElementsByName("pic")[0], {
+  fireEvent.change(screen.getByLabelText("Catalog picture"), {
     target: { files: [picture] },
   });
   return picture;
 }
 
-function dispatched(spy, type) {
-  return spy.mock.calls.map(([action]) => action).find((action) => action.type === type);
+function dispatched(dispatchSpy, type) {
+  return dispatchSpy.mock.calls.map(([action]) => action).find((action) => action.type === type);
 }
 
 describe("remaining admin catalog CRUD", () => {
@@ -92,11 +92,11 @@ describe("remaining admin catalog CRUD", () => {
     [<AdminTestimonial />, "/admin/testimonial", "Excellent shop", DELETE_TESTIMONIAL, 3],
   ])("lists and deletes records in %s", (element, route, text, type, id) => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    const spy = renderPage(element, route);
+    const { dispatchSpy } = renderPage(element, route);
     expect(screen.getByText(text)).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getAllByRole("button").at(-1));
-    expect(spy).toHaveBeenCalledWith({ type, payload: { id } });
+    expect(dispatchSpy).toHaveBeenCalledWith({ type, payload: { id } });
   });
 
   test.each([
@@ -108,43 +108,43 @@ describe("remaining admin catalog CRUD", () => {
     renderPage(element, route, undefined, { [stateKey]: [] });
     expect(screen.queryAllByRole("row")).toHaveLength(1);
 
-    const spy = renderPage(element, route);
-    spy.mockClear();
+    const { dispatchSpy } = renderPage(element, route);
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getAllByRole("button").at(-1));
     expect(confirmSpy).toHaveBeenCalled();
-    expect(dispatched(spy, type)).toBeUndefined();
+    expect(dispatched(dispatchSpy, type)).toBeUndefined();
   });
 
   test("creates a brand with multipart data and supports inactive selection", async () => {
-    const spy = renderPage(<AdminCreateBrand />, "/admin/brand/create", undefined, {
+    const { dispatchSpy } = renderPage(<AdminCreateBrand />, "/admin/brand/create", undefined, {
       BrandStateData: [],
     });
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Nova" } });
     uploadPicture();
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "0" } });
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(await screen.findByText("Brand destination")).toBeInTheDocument();
-    expect(dispatched(spy, CREATE_BRAND).payload).toBeInstanceOf(FormData);
+    expect(dispatched(dispatchSpy, CREATE_BRAND).payload).toBeInstanceOf(FormData);
   });
 
   test("creates a subcategory with multipart data", async () => {
-    const spy = renderPage(<AdminCreateSubcategory />, "/admin/subcategory/create", undefined, {
+    const { dispatchSpy } = renderPage(<AdminCreateSubcategory />, "/admin/subcategory/create", undefined, {
       SubcategoryStateData: [],
     });
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Garden" } });
     uploadPicture();
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(await screen.findByText("Subcategory destination")).toBeInTheDocument();
-    expect(dispatched(spy, CREATE_SUBCATEGORY).payload).toBeInstanceOf(FormData);
+    expect(dispatched(dispatchSpy, CREATE_SUBCATEGORY).payload).toBeInstanceOf(FormData);
   });
 
   test("creates a testimonial with its message and picture", async () => {
-    const spy = renderPage(<AdminCreateTestimonial />, "/admin/testimonial/create", undefined, {
+    const { dispatchSpy } = renderPage(<AdminCreateTestimonial />, "/admin/testimonial/create", undefined, {
       TestimonialStateData: [],
     });
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.change(screen.getAllByRole("textbox")[0], { target: { value: "Morgan" } });
     fireEvent.change(screen.getByPlaceholderText("Message..."), {
       target: { value: "A very helpful shopping experience with quick delivery and support." },
@@ -152,7 +152,7 @@ describe("remaining admin catalog CRUD", () => {
     uploadPicture();
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(await screen.findByText("Testimonial destination")).toBeInTheDocument();
-    expect(dispatched(spy, CREATE_TESTIMONIAL).payload).toBeInstanceOf(FormData);
+    expect(dispatched(dispatchSpy, CREATE_TESTIMONIAL).payload).toBeInstanceOf(FormData);
   });
 
   test.each([
@@ -160,8 +160,8 @@ describe("remaining admin catalog CRUD", () => {
     [<AdminCreateSubcategory />, "/admin/subcategory/create", "Shoes", "Subcategory Name is Already Exist"],
     [<AdminCreateTestimonial />, "/admin/testimonial/create", "Alex", "Testimonial Name is Already Exist"],
   ])("rejects duplicate names while creating", (element, route, name, message) => {
-    const spy = renderPage(element, route);
-    spy.mockClear();
+    const { dispatchSpy } = renderPage(element, route);
+    dispatchSpy.mockClear();
     fireEvent.change(screen.getAllByRole("textbox")[0], { target: { value: name } });
     const messageBox = screen.queryByPlaceholderText("Message...");
     if (messageBox) {
@@ -179,15 +179,15 @@ describe("remaining admin catalog CRUD", () => {
     [<AdminUpdateSubcategory />, "/admin/subcategory/update/2", "/admin/subcategory/update/:id", "Shoes", "Subcategory destination", UPDATE_SUBCATEGORY],
     [<AdminUpdateTestimonial />, "/admin/testimonial/update/3", "/admin/testimonial/update/:id", "Alex", "Testimonial destination", UPDATE_TESTIMONIAL],
   ])("updates the current record without flagging its own name as duplicate", async (element, route, pattern, value, destination, type) => {
-    const spy = renderPage(element, route, pattern);
+    const { dispatchSpy } = renderPage(element, route, pattern);
     expect(await screen.findByDisplayValue(value)).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.change(screen.getAllByRole("textbox")[0], { target: { value } });
     uploadPicture();
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "0" } });
     fireEvent.click(screen.getByRole("button", { name: "Update" }));
     expect(await screen.findByText(destination)).toBeInTheDocument();
-    expect(dispatched(spy, type).payload).toBeInstanceOf(FormData);
+    expect(dispatched(dispatchSpy, type).payload).toBeInstanceOf(FormData);
   });
 
   test.each([
@@ -195,16 +195,16 @@ describe("remaining admin catalog CRUD", () => {
     [<AdminUpdateSubcategory />, "/admin/subcategory/update/2", "/admin/subcategory/update/:id", "SubcategoryStateData", subcategory, "Garden", "Subcategory Name is Already Exist", UPDATE_SUBCATEGORY],
     [<AdminUpdateTestimonial />, "/admin/testimonial/update/3", "/admin/testimonial/update/:id", "TestimonialStateData", testimonial, "Morgan", "Testimonial Name is Already Exist", UPDATE_TESTIMONIAL],
   ])("rejects an update that duplicates another record", async (element, route, pattern, stateKey, current, duplicateName, message, type) => {
-    const spy = renderPage(element, route, pattern, {
+    const { dispatchSpy } = renderPage(element, route, pattern, {
       [stateKey]: [current, { ...current, id: 99, name: duplicateName }],
     });
     expect(await screen.findByDisplayValue(current.name)).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.change(screen.getAllByRole("textbox")[0], {
       target: { value: duplicateName },
     });
     fireEvent.click(screen.getByRole("button", { name: "Update" }));
     expect(screen.getByText(message)).toBeInTheDocument();
-    expect(dispatched(spy, type)).toBeUndefined();
+    expect(dispatched(dispatchSpy, type)).toBeUndefined();
   });
 });

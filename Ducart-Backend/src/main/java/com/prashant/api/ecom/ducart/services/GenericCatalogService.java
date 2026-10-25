@@ -3,10 +3,11 @@ package com.prashant.api.ecom.ducart.services;
 import com.prashant.api.ecom.ducart.exception.ResourceNotFoundException;
 import com.prashant.api.ecom.ducart.utils.FileUploadUtil;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class GenericCatalogService<T> {
@@ -59,17 +60,14 @@ public class GenericCatalogService<T> {
 
     private void setPicIfPossible(T item, String pic) {
         if (pic == null) return;
-        try {
-            Method m = item.getClass().getMethod("setPic", String.class);
-            m.invoke(item, pic);
-        } catch (Exception ignored) {}
+        BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(item);
+        if (bean.isWritableProperty("pic")) bean.setPropertyValue("pic", pic);
     }
 
     private String getPicIfPossible(T item) {
-        try {
-            Method m = item.getClass().getMethod("getPic");
-            Object value = m.invoke(item);
-            return value == null ? null : value.toString();
-        } catch (Exception ignored) { return null; }
+        BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(item);
+        if (!bean.isReadableProperty("pic")) return null;
+        Object value = bean.getPropertyValue("pic");
+        return value == null ? null : value.toString();
     }
 }

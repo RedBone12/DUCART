@@ -369,7 +369,7 @@ export default function AdminupdateProduct() {
                   <label>Pic*</label>
                   <input
                     type="file"
-                    name="pic"
+                    name="pic" aria-label="Product pictures"
                     multiple
                     onChange={getInputData}
                     className={`form-control border-3 ${
@@ -423,7 +423,7 @@ export default function AdminupdateProduct() {
                           setFlag(!flag);
                         }}
                         src={`${process.env.REACT_APP_SERVER}${item}`}
-                        alt={`Remove ${data.name} picture ${index + 1}`}
+                        alt={`Remove ${data.name} ${index + 1}`}
                         height={50}
                         width={50}
                         className="mx-1"

@@ -85,7 +85,7 @@ export default function AdminCreateTestimonial() {
     (() => {
       dispatch(getTestimonial());
     })();
-  }, [TestimonialStateData.length]);
+  }, [dispatch]);
 
   //testimonial admin create page
   return (
@@ -145,7 +145,7 @@ export default function AdminCreateTestimonial() {
                   <label>Pic*</label>
                   <input
                     type="file"
-                    name="pic"
+                    name="pic" aria-label="Catalog picture"
                     onChange={getInputData}
                     className={`form-control border-3 ${
                       show && errorMessage.pic

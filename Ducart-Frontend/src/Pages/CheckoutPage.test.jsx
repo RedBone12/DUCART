@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import CheckoutPage from "./CheckoutPage";
-import { CREATE_CHECKOUT } from "../Redux/Constants";
+import { DELETE_CART } from "../Redux/Constants";
 
 const user = {
   id: 42,
@@ -68,6 +68,8 @@ function setupCheckoutPage({ cart = [cartItem], products = [product] } = {}) {
 describe("CheckoutPage", () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    Object.defineProperty(window, "crypto", { configurable: true, value: { randomUUID: () => "checkout-test-key" } });
     localStorage.setItem("token", "buyer-token");
     localStorage.setItem("userid", "42");
     localStorage.setItem("username", "buyer");
@@ -115,23 +117,18 @@ describe("CheckoutPage", () => {
     await screen.findByRole("cell", { name: "Demo Buyer" });
     dispatchSpy.mockClear();
 
+    global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, total: 28.99 }) });
     fireEvent.click(screen.getByRole("button", { name: "Place Order" }));
 
     expect(await screen.findByText("Confirmation page")).toBeInTheDocument();
-    expect(dispatchSpy).toHaveBeenCalledWith({
-      type: CREATE_CHECKOUT,
-      payload: expect.objectContaining({
-        user: "buyer",
-        orderStatus: "Order is Placed",
-        paymentMode: "COD",
-        paymentStatus: "Pending",
-        subtotal: 24,
-        shipping: 4.99,
-        total: 28.99,
-        date: expect.any(String),
-        products: [expect.objectContaining({ id: 10, qty: 1 })],
+    expect(global.fetch).toHaveBeenCalledWith(
+      process.env.REACT_APP_SERVER + "/checkout",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ paymentMode: "COD", products: [{ productId: 1, qty: 1 }], idempotencyKey: "checkout-test-key" }),
       }),
-    });
+    );
+    expect(dispatchSpy).toHaveBeenCalledWith({ type: DELETE_CART, payload: { id: 10 } });
   });
 
   test("shows an empty-cart state without a place-order action", async () => {

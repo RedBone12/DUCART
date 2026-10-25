@@ -82,6 +82,10 @@ public class CartService {
     }
 
     private Product requireProduct(Cart cart) {
+        if (cart.getProductId() != null) {
+            return productRepo.findById(cart.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        }
         if (cart.getProduct() == null || cart.getProduct().isBlank()) {
             throw new BadRequestException("Product is required");
         }
@@ -113,6 +117,7 @@ public class CartService {
                 .orElse(Optional.ofNullable(product.getBasePrice()).orElse(0.0));
 
         cart.setProduct(product.getName());
+        cart.setProductId(product.getId());
         cart.setName(product.getName());
         cart.setBrand(product.getBrand());
         cart.setColor(product.getColor());

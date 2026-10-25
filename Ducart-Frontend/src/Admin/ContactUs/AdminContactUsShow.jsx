@@ -36,22 +36,14 @@ export default function AdminContactUsShow() {
     }
   }
 
-  function getAPIData() {
-    dispatch(getContactUs())
-
-    if (ContactUsStateData.length) {
-      setData(ContactUsStateData.find(x => x.id == id))
-    }
-
-    let time = setTimeout(() => {
-      $('#DataTable').DataTable()
-    }, 500);
-    return time
-  }
+  useEffect(() => { dispatch(getContactUs()); }, [dispatch]);
   useEffect(() => {
-    let time = getAPIData()
-    return () => clearTimeout(time)
-  }, [ContactUsStateData.length])
+    const item = ContactUsStateData.find((entry) => String(entry.id) === String(id));
+    if (!item) return;
+    setData(item);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => { clearTimeout(timer); };
+  }, [ContactUsStateData, id]);
 
   return (
     <>

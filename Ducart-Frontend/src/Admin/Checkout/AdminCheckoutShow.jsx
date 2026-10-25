@@ -33,35 +33,29 @@ export default function AdminCheckoutShow() {
     }
   }
 
-  async function getAPIData() {
-    dispatch(getCheckout())
-
-    if (CheckoutStateData.length) {
-      let item = CheckoutStateData.find(x => x.id == id)
-      setData(item)
-      setOrderStatus(item.orderStatus)
-      setPaymentStatus(item.paymentStatus)
-
-
-      let response = await fetch(`${process.env.REACT_APP_SERVER}/user/${item.user}`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json"
-        }
-      })
-      response = await response.json()
-      setUser(response)
-    }
-
-    let time = setTimeout(() => {
-      $('#DataTable').DataTable()
-    }, 500);
-    return time
-  }
+  useEffect(() => { dispatch(getCheckout()); }, [dispatch]);
   useEffect(() => {
-    let time = getAPIData()
-    return () => clearTimeout(time)
-  }, [CheckoutStateData.length])
+    const item = CheckoutStateData.find((entry) => String(entry.id) === String(id));
+    if (!item) return;
+    setData(item);
+    setOrderStatus(item.orderStatus);
+    setPaymentStatus(item.paymentStatus);
+    let active = true;
+    async function loadCustomer() {
+      try {
+        const response = await fetch(process.env.REACT_APP_SERVER + "/user/" + item.user, {
+          method: "GET", headers: { "content-type": "application/json" },
+        });
+        const customer = await response.json();
+        if (active) setUser(customer);
+      } catch {
+        if (active) setUser({});
+      }
+    }
+    loadCustomer();
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => { active = false; clearTimeout(timer); };
+  }, [CheckoutStateData, id]);
 
   return (
     <>

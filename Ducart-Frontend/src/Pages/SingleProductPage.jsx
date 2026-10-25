@@ -68,6 +68,7 @@ export default function SingleProductPage() {
 
     if (!item) {
       item = {
+        productId: data.id,
         product: data.name,
         name: data.name,
         brand: data.brand,

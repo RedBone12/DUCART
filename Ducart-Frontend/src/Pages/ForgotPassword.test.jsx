@@ -1,175 +1,87 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { act } from "react";
-
+import { MemoryRouter } from "react-router-dom";
 import ForgotPassword from "./ForgotPassword";
 
-function renderForgotPassword() {
-  return render(
-    <MemoryRouter initialEntries={["/forgot-password"]}>
-      <Routes>
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/login" element={<div>Login destination</div>} />
-      </Routes>
-    </MemoryRouter>,
-  );
+const token = "a".repeat(43);
+function setup(withToken = false) {
+  render(<MemoryRouter initialEntries={["/forgot-password" + (withToken ? "?token=" + token : "")]}><ForgotPassword /></MemoryRouter>);
 }
-
-function enterResetDetails(overrides = {}) {
-  const placeholders = {
-    usernameOrEmail: "Enter username or email",
-    phone: "Enter registered phone number",
-    newPassword: "New password",
-    confirmPassword: "Confirm password",
-  };
-  const values = {
-    usernameOrEmail: "buyer@example.com",
-    phone: "+353871234567",
-    newPassword: "NewPass1",
-    confirmPassword: "NewPass1",
-    ...overrides,
-  };
-
-  Object.entries(values).forEach(([name, value]) => {
-    fireEvent.change(screen.getByPlaceholderText(placeholders[name]), {
-      target: { name, value },
-    });
-  });
+function enterPassword(value = "ReplacementPassword123", confirmation = value) {
+  fireEvent.change(screen.getByLabelText("New Password"), { target: { value } });
+  fireEvent.change(screen.getByLabelText("Confirm Password"), { target: { value: confirmation } });
 }
+beforeEach(() => { global.fetch = jest.fn(); });
 
-describe("ForgotPassword", () => {
-  beforeEach(() => {
-    global.fetch = jest.fn();
+test("requests only a reset email and never asks for a phone or new password", async () => {
+  global.fetch.mockResolvedValue({ ok: true, json: async () => ({ message: "If the account exists, a reset link will be sent." }) });
+  setup();
+  expect(screen.queryByLabelText("New Password")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Phone Number/)).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Username or Email"), { target: { value: " buyer@example.test " } });
+  fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("If the account exists");
+  expect(global.fetch).toHaveBeenCalledWith(process.env.REACT_APP_SERVER + "/user/forgot-password", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ usernameOrEmail: "buyer@example.test" }),
   });
+});
 
-  afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+test("requires an identity before requesting email", async () => {
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Username or email is required");
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test("uses the emailed token to reset the password", async () => {
+  global.fetch.mockResolvedValue({ ok: true, json: async () => ({ message: "Password reset successfully. Please sign in." }) });
+  setup(true);
+  expect(screen.queryByLabelText("Username or Email")).not.toBeInTheDocument();
+  enterPassword();
+  fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("Password reset successfully");
+  expect(global.fetch).toHaveBeenCalledWith(process.env.REACT_APP_SERVER + "/user/reset-password", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ token, newPassword: "ReplacementPassword123" }),
   });
+  expect(screen.queryByRole("button", { name: "Reset Password" })).not.toBeInTheDocument();
+});
 
-  test("renders reset fields, navigation links, and password controls", () => {
-    renderForgotPassword();
+test("rejects short and mismatched passwords without contacting the server", async () => {
+  setup(true);
+  enterPassword("short");
+  fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("between 12 and 72");
+  enterPassword("ReplacementPassword123", "DifferentPassword123");
+  fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Passwords do not match");
+  expect(global.fetch).not.toHaveBeenCalled();
+});
 
-    expect(
-      screen.getByRole("heading", { name: "Reset Your Password" }),
-    ).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Enter username or email")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to Login" })).toHaveAttribute(
-      "href",
-      "/login",
-    );
-    expect(screen.getByRole("link", { name: "Create an Account" })).toHaveAttribute(
-      "href",
-      "/signup",
-    );
-  });
+test.each([400, 429])("shows expired-link and rate-limit errors from HTTP %s", async (status) => {
+  global.fetch.mockResolvedValue({ ok: false, status, json: async () => ({ message: "Reset link is invalid or expired" }) });
+  setup(true); enterPassword();
+  fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("invalid or expired");
+  expect(screen.getByRole("link", { name: "Request a new link" })).toHaveAttribute("href", "/forgot-password");
+});
 
-  test("toggles both password fields between hidden and visible", () => {
-    renderForgotPassword();
-    const newPassword = screen.getByPlaceholderText("New password");
-    const confirmPassword = screen.getByPlaceholderText("Confirm password");
+test("disables duplicate submission and recovers after network failure", async () => {
+  let reject;
+  global.fetch.mockImplementation(() => new Promise((resolve, fail) => { reject = fail; }));
+  setup(true); enterPassword();
+  fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
+  expect(screen.getByRole("button", { name: "Please wait..." })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Please wait..." }));
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  reject(new Error("Network unavailable"));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Network unavailable");
+  expect(screen.getByRole("button", { name: "Reset Password" })).toBeEnabled();
+});
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Toggle password visibility" }),
-    );
-    expect(newPassword).toHaveAttribute("type", "text");
-    expect(confirmPassword).toHaveAttribute("type", "text");
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Toggle password visibility" }),
-    );
-    expect(newPassword).toHaveAttribute("type", "password");
-  });
-
-  test("requires every field and treats whitespace as empty", () => {
-    renderForgotPassword();
-    fireEvent.change(screen.getByPlaceholderText("Enter username or email"), {
-      target: { name: "usernameOrEmail", value: "   " },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
-
-    expect(screen.getByText("All fields are required")).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalled();
-  });
-
-  test("rejects a password shorter than six characters", () => {
-    renderForgotPassword();
-    enterResetDetails({ newPassword: "12345", confirmPassword: "12345" });
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
-
-    expect(
-      screen.getByText("Password must be at least 6 characters"),
-    ).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalled();
-  });
-
-  test("rejects different new and confirmation passwords", () => {
-    renderForgotPassword();
-    enterResetDetails({ confirmPassword: "OtherPass1" });
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
-
-    expect(
-      screen.getByText("New password and confirm password do not match"),
-    ).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalled();
-  });
-
-  test("shows an account mismatch returned by the server", async () => {
-    global.fetch.mockResolvedValue({ ok: false, status: 400 });
-    renderForgotPassword();
-    enterResetDetails();
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
-
-    expect(
-      await screen.findByText(
-        "Account details do not match. Please check and try again.",
-      ),
-    ).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${process.env.REACT_APP_SERVER}/user/forgot-password`,
-      {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          usernameOrEmail: "buyer@example.com",
-          phone: "+353871234567",
-          newPassword: "NewPass1",
-        }),
-      },
-    );
-  });
-
-  test("shows a server error when the request cannot be completed", async () => {
-    global.fetch.mockRejectedValue(new Error("Network unavailable"));
-    renderForgotPassword();
-    enterResetDetails();
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
-
-    expect(
-      await screen.findByText("Server error. Please try again later."),
-    ).toBeInTheDocument();
-  });
-
-  test("shows success and redirects to login after the delay", async () => {
-    jest.useFakeTimers();
-    global.fetch.mockResolvedValue({ ok: true, status: 200 });
-    renderForgotPassword();
-    enterResetDetails();
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
-
-    expect(
-      await screen.findByText("Password reset successfully. Redirecting to login..."),
-    ).toBeInTheDocument();
-
-    act(() => {
-      jest.advanceTimersByTime(1500);
-    });
-    expect(screen.getByText("Login destination")).toBeInTheDocument();
-  });
+test("toggles password visibility", () => {
+  setup(true);
+  expect(screen.getByLabelText("New Password")).toHaveAttribute("type", "password");
+  fireEvent.click(screen.getByRole("button", { name: "Toggle password visibility" }));
+  expect(screen.getByLabelText("New Password")).toHaveAttribute("type", "text");
 });

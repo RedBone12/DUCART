@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,7 +8,7 @@ import {
   updateCart,
   deleteCart,
 } from "../Redux/ActionCreators/CartActionCreators";
-import { createCheckout } from "../Redux/ActionCreators/CheckoutActionCreators";
+import { submitOrder, pendingOrder, clearPendingOrder } from "../config/checkout";
 import { getProduct } from "../Redux/ActionCreators/ProductActionCreators";
 import siteConfig, { formatCurrency } from "../config/siteConfig";
 
@@ -26,73 +26,33 @@ export default function Cart(props) {
 
   let navigate = useNavigate();
 
-  function placeOrder() {
-    for (const c of cart) {
-      const p = ProductStateData.find(
-        (x) => String(x.name) === String(c.product),
-      );
+  const [submitting, setSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState("");
+  const submissionLock = useRef(false);
 
-      if (!p) {
-        alert(`${c.product} was not found in product list`);
-        return;
-      }
-
-      if (Number(c.qty) > Number(p.stockQuantity)) {
-        alert(`${c.product} has only ${p.stockQuantity} items left in stock`);
-        return;
-      }
+  async function placeOrder() {
+    if (submissionLock.current) return;
+    submissionLock.current = true;
+    setSubmitting(true);
+    setOrderError("");
+    try {
+      const products = cart.map((item) => {
+        const productId = item.productId ?? ProductStateData.find((p) => p.name === item.product)?.id;
+        if (!productId) throw new Error(item.product + " was not found in product list");
+        return { productId, qty: Number(item.qty) };
+      }).sort((a, b) => a.productId - b.productId);
+      const order = await submitOrder(pendingOrder(mode, products));
+      clearPendingOrder();
+      cart.forEach((item) => dispatch(deleteCart({ id: item.id })));
+      dispatch(getProduct());
+      navigate("/confirmation", { state: { order } });
+    } catch (error) {
+      setOrderError(error.message || "Unable to place order. Please retry.");
+    } finally {
+      submissionLock.current = false;
+      setSubmitting(false);
     }
-
-    let item = {
-      user: localStorage.getItem("username"),
-      orderStatus: "Order is Placed",
-      paymentMode: mode,
-      paymentStatus:
-        mode === "Card Demo" || mode === "PayPal Demo"
-          ? "Paid (Demo)"
-          : "Pending",
-      subtotal: subtotal,
-      shipping: shipping,
-      total: total,
-      date: new Date().toISOString(),
-      products: [...cart],
-    };
-
-    dispatch(createCheckout(item));
-
-    // for (const c of cart) {
-    //   dispatch(deleteCart(c.id));
-    // }
-
-    navigate("/confirmation");
   }
-
-  // function placeOrder() {
-  //   let item = {
-  //     user: localStorage.getItem("username"),
-  //     orderStatus: "Order is Placed",
-  //     paymentMode: mode,
-  //     paymentStatus:
-  //       mode === "Card Demo" || mode === "PayPal Demo"
-  //         ? "Paid (Demo)"
-  //         : "Pending",
-  //     subtotal: subtotal,
-  //     shipping: shipping,
-  //     total: total,
-  //     date: new Date(),
-  //     products: [...cart],
-  //   };
-  //   dispatch(createCheckout(item));
-  //   cart.forEach((c) => {
-  //     let p = ProductStateData.find((x) => String(x.name) === String(c.product));
-  //     p.stockQuantity = p.stockQuantity - c.qty;
-  //     p.stock = p.stockQuantity === 0 ? false : true;
-  //     dispatch(updateProduct(p));
-  //     dispatch(deleteCart({ id: c.id }));
-  //   });
-
-  //   navigate("/confirmation");
-  // }
 
   function deleteRecord(id) {
     if (window.confirm("Are You Sure to Delete that Item : ")) {
@@ -289,11 +249,14 @@ export default function Cart(props) {
                   <tr>
                     {props.title === "Checkout" ? (
                       <td colSpan={2}>
+                        {orderError && <p role="alert" className="text-danger">{orderError}</p>}
+                        <p className="text-muted">Final prices and availability are confirmed by the server. Demo payments do not charge you.</p>
                         <button
                           onClick={placeOrder}
+                          disabled={submitting}
                           className="btn btn-primary w-100"
                         >
-                          Place Order
+                          {submitting ? "Placing Order..." : "Place Order"}
                         </button>
                       </td>
                     ) : (

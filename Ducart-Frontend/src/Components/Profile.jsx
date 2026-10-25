@@ -49,7 +49,7 @@ export default function Profile(props) {
   return (
     <div className="row">
       <div
-        className={`col-md-6 ${
+        data-testid="profile-picture" className={`col-md-6 ${
           props.title === "Checkout" ? "d-none" : "d-block"
         }`}
       >

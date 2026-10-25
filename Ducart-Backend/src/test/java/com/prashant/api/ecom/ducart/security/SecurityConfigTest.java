@@ -62,10 +62,22 @@ class SecurityConfigTest {
     }
 
     @Test
-    void forgotPasswordPut_shouldBePublic() throws Exception {
+    void legacyPhoneReset_shouldNotBePublic() throws Exception {
         mockMvc.perform(put("/user/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"usernameOrEmail\":\"missing\",\"phone\":\"0000000\",\"newPassword\":\"secret\"}"))
-                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()));
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void passwordResetRequestPost_shouldBePublicButValidateBody() throws Exception {
+        mockMvc.perform(post("/user/forgot-password").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void passwordResetConfirmationPost_shouldBePublicButRequireToken() throws Exception {
+        mockMvc.perform(post("/user/reset-password").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
     }
 }
