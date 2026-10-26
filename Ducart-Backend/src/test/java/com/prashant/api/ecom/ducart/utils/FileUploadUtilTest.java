@@ -59,6 +59,9 @@ class FileUploadUtilTest {
     void uploadDirectory_shouldRejectBlankAndTraversalFolders() {
         assertThrows(IllegalArgumentException.class, () -> FileUploadUtil.uploadDirFor(null));
         assertThrows(IllegalArgumentException.class, () -> FileUploadUtil.uploadDirFor(" "));
-        assertThrows(IllegalArgumentException.class, () -> FileUploadUtil.uploadDirFor("..\\outside"));
+        for (String invalid : List.of("..\\outside", "../outside", "nested/../../outside",
+                "C:\\outside", "C:/outside", "\\\\server\\share", "//server/share", "/outside")) {
+            assertThrows(IllegalArgumentException.class, () -> FileUploadUtil.uploadDirFor(invalid), invalid);
+        }
     }
 }

@@ -10,6 +10,10 @@ public class FileUploadUtil {
         if (folder == null || folder.isBlank()) {
             throw new IllegalArgumentException("Upload folder is required");
         }
+        // Folder names are relative URL paths on every platform, not native Windows paths.
+        if (folder.indexOf('\\') >= 0 || folder.indexOf(':') >= 0) {
+            throw new IllegalArgumentException("Upload folder must use a relative URL-style path");
+        }
 
         Path uploadsRoot = Paths.get("uploads").toAbsolutePath().normalize();
         Path dir = uploadsRoot.resolve(folder).normalize();
