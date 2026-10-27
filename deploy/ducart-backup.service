@@ -1,0 +1,12 @@
+[Unit]
+Description=DUCART consistent database, uploads and application image backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+# Set this to the same deployment account that owns production.env and the checkout.
+User=ducart
+WorkingDirectory=/opt/ducart
+ExecStart=/usr/bin/node /opt/ducart/scripts/ops.cjs backup --env /opt/ducart/deploy/production.env --project ducart-production
+UMask=0077

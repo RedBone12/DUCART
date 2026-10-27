@@ -1,8 +1,8 @@
 # Quality gates
 
 Every pull request and every push to main runs the Quality workflow. There are no
-path filters or skipped checks for documentation-only changes. The four stable
-required-check names are `Backend quality`, `Frontend quality`, `MySQL integration` and `Browser E2E`.
+path filters or skipped checks for documentation-only changes. The five stable
+required-check names are `Backend quality`, `Frontend quality`, `MySQL integration`, `Browser E2E` and `Deployment recovery`.
 
 | Check | Enforced requirement |
 | --- | --- |
@@ -13,8 +13,9 @@ required-check names are `Backend quality`, `Frontend quality`, `MySQL integrati
 | Frontend ESLint | Zero errors and zero warnings in application and test files |
 | Jest | At least 90% statements, lines and functions; 80% branches |
 | Frontend build | Production build succeeds with CI=true |
-| MySQL integration | 22 real MySQL query, constraint, checkout and JWT tests; separate coverage report |
+| MySQL integration | Real MySQL query, constraint, checkout, JWT and Flyway migration tests; separate coverage report |
 | Browser E2E | Three Chromium journeys against real Spring Boot and MySQL |
+| Deployment recovery | Real HTTPS stack, persistent purchase/image, outage readiness, backup validation, fresh-volume restore and rollback |
 
 JaCoCo has no package exclusions. Its standard generated-bytecode filters still
 apply. Jest collects every JS/JSX file under src, including unimported files;
@@ -56,6 +57,11 @@ The integration update verified on 27 October passed 473 backend unit tests,
 journeys. ESLint and the CI=true browser production build also passed. The
 coverage table below records the original 25 October baseline.
 
+The production update adds two production-origin CORS tests and a MySQL Flyway
+migration/validation test: 475 backend tests and 23 MySQL integration tests pass
+locally. The recovery job separately executes real deployment and storage drills;
+its report distinguishes local TLS verification from a public cloud deployment.
+
 | Coverage | Backend | Frontend |
 | --- | --- | --- |
 | Lines | 96.84% | 99.10% |
@@ -78,13 +84,13 @@ incomplete item after a setter failure.
 
 ## Pull requests and publishing
 
-Configure main to require a pull request and all four checks, with the branch
+Configure main to require a pull request and all five checks, with the branch
 up to date before merging. Apply the rules to administrators too, and disallow
 force pushes and branch deletion. Zero approval reviews are required so a solo
 maintainer can merge a reviewed change without needing a second account.
 
 The old pages.yml workflow is replaced by quality.yml. On main, the frontend
-job creates the Pages artifact. Publishing depends on all four test and quality jobs succeeding. Pull requests run the same quality commands but never deploy.
+job creates the Pages artifact. Publishing depends on all five test and quality jobs succeeding. Pull requests run the same quality commands but never deploy.
 No CI=false or lint-disable environment override is used.
 
 Jenkinsfile invokes the same Maven command and frontend lint, coverage and build

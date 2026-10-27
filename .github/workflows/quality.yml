@@ -154,10 +154,29 @@ jobs:
             Ducart-Frontend/playwright-report/
             Ducart-Frontend/test-results/
 
+  recovery:
+    name: Deployment recovery
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real HTTPS deployment, persisted purchase, backup, fresh-volume restore and failed-release rollback
+        run: node scripts/recovery-drill.cjs
+      - name: Upload synthetic recovery drill report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-recovery-report
+          path: deploy/drill-results/latest.json
+          retention-days: 14
+
   deploy:
     name: Deploy frontend
     if: github.ref == 'refs/heads/main'
-    needs: [backend, frontend, mysql, browser]
+    needs: [backend, frontend, mysql, browser, recovery]
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -169,6 +188,6 @@ jobs:
       group: github-pages
       cancel-in-progress: true
     steps:
-      - name: Deploy the build that passed all four checks
+      - name: Deploy the build that passed all five checks
         id: deployment
         uses: actions/deploy-pages@v4

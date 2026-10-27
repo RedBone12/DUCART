@@ -26,5 +26,8 @@ Thumbs.db
 
 # Local database backups
 backups/
+deploy/*.env
+deploy/.state/
+deploy/drill-results/
 Ducart-Frontend/playwright-report/
 Ducart-Frontend/test-results/

@@ -14,7 +14,7 @@ From `Ducart-Backend` in PowerShell:
 ```
 
 The normal unit tests, Checkstyle, SpotBugs and coverage gate run first. Failsafe
-then runs 22 MySQL tests: repository queries and user uniqueness constraints,
+then runs the MySQL tests: repository queries and user uniqueness constraints,
 picture collection reload, server-side checkout calculation, idempotency,
 concurrent stock deduction and transaction rollback. One full MockMvc journey
 uses actual registration, password authentication and signed JWTs to purchase
@@ -78,5 +78,7 @@ refresh cannot replace unsaved edits. A frontend regression test covers this rac
 
 The Quality workflow runs separate `MySQL integration` and `Browser E2E` jobs
 alongside the two existing quality jobs. Reports are retained for 14 days,
-including available failure evidence. Pages publishing waits for all four jobs.
+including available failure evidence. Pages publishing also waits for the separate
+`Deployment recovery` job, which exercises the production Flyway/HTTPS stack and
+backup, restore and rollback procedures with synthetic data.
 See [quality gates](quality-gates.md) for coverage thresholds and branch rules.

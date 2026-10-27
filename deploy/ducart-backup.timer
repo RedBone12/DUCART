@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily DUCART recovery snapshot
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target
