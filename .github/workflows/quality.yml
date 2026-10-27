@@ -88,10 +88,75 @@ jobs:
         with:
           path: Ducart-Frontend/build
 
+  mysql:
+    name: MySQL integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Real MySQL queries, constraints, JWT purchase flow, locks and rollback
+        run: sh ./mvnw --batch-mode --no-transfer-progress clean verify -Pmysql-it
+        working-directory: Ducart-Backend
+      - name: Require a real integration coverage report
+        run: test -s target/site/jacoco-it/jacoco.xml
+        working-directory: Ducart-Backend
+      - name: Upload MySQL integration and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysql-integration-reports
+          retention-days: 14
+          path: |
+            Ducart-Backend/target/failsafe-reports/
+            Ducart-Backend/target/site/jacoco-it/
+
+  browser:
+    name: Browser E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Ducart-Frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: Ducart-Frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: Ducart-Frontend
+      - name: Build the isolated browser-test frontend
+        run: npm run e2e:build
+        working-directory: Ducart-Frontend
+      - name: Chromium purchase, administrator CRUD and access-control journeys
+        run: npm run test:e2e
+        working-directory: Ducart-Frontend
+      - name: Upload browser report and failure traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-report
+          retention-days: 14
+          path: |
+            Ducart-Frontend/playwright-report/
+            Ducart-Frontend/test-results/
+
   deploy:
     name: Deploy frontend
     if: github.ref == 'refs/heads/main'
-    needs: [backend, frontend]
+    needs: [backend, frontend, mysql, browser]
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -103,6 +168,6 @@ jobs:
       group: github-pages
       cancel-in-progress: true
     steps:
-      - name: Deploy the build that passed both quality jobs
+      - name: Deploy the build that passed all four checks
         id: deployment
         uses: actions/deploy-pages@v4

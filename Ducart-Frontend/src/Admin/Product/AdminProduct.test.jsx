@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
@@ -59,16 +59,12 @@ function renderProductAdmin(element, route, products = [product], routePattern =
     </Provider>,
   );
 
-  return { dispatchSpy };
+  return { dispatchSpy, store };
 }
 
 describe("Admin product CRUD", () => {
   beforeEach(() => {
     URL.createObjectURL = jest.fn(() => "blob:preview");
-    window.RichTextEditor = jest.fn(() => ({
-      setHTMLCode: jest.fn(),
-      getHTMLCode: jest.fn(() => "<p>Healthy food</p>"),
-    }));
   });
 
   afterEach(() => {
@@ -161,6 +157,9 @@ describe("Admin product CRUD", () => {
     fireEvent.change(screen.getByLabelText("Product pictures"), {
       target: { files: [picture] },
     });
+    fireEvent.change(screen.getByLabelText("Description"), {
+      target: { value: "Healthy food" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     expect(await screen.findByText("Product list page")).toBeInTheDocument();
@@ -180,6 +179,7 @@ describe("Admin product CRUD", () => {
       "/admin/product/update/:id",
     );
     expect(await screen.findByDisplayValue("Premium Dog Food")).toBeInTheDocument();
+    expect(screen.getByLabelText("Description")).toHaveValue(product.description);
     dispatchSpy.mockClear();
 
     fireEvent.change(screen.getByPlaceholderText("Product Color"), {
@@ -209,6 +209,22 @@ describe("Admin product CRUD", () => {
     expect(updateAction.payload).toBeInstanceOf(FormData);
     expect(updateAction.payload.get("id")).toBe("1");
     expect(updateAction.payload.getAll("pic")).toEqual([replacement]);
+  });
+
+  test("preserves unsaved product edits when the catalogue refreshes", async () => {
+    const { store } = renderProductAdmin(
+      <AdminUpdateProduct />,
+      "/admin/product/update/1",
+      [product],
+      "/admin/product/update/:id",
+    );
+    await screen.findByDisplayValue(product.name);
+    fireEvent.change(screen.getByLabelText("Product name"), {
+      target: { value: "Unsaved new name" },
+    });
+    const refreshedState = { ...store.getState(), ProductStateData: [{ ...product }] };
+    act(() => store.replaceReducer(() => refreshedState));
+    expect(screen.getByLabelText("Product name")).toHaveValue("Unsaved new name");
   });
 
   test("shows every edited-field validation error before updating a product", async () => {

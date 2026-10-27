@@ -6,6 +6,9 @@ import java.nio.file.*;
 import java.util.*;
 
 public class FileUploadUtil {
+    public static Path uploadRoot() {
+        return Paths.get(System.getProperty("ducart.upload-dir", "uploads")).toAbsolutePath().normalize();
+    }
     public static String uploadDirFor(String folder) throws IOException {
         if (folder == null || folder.isBlank()) {
             throw new IllegalArgumentException("Upload folder is required");
@@ -15,7 +18,7 @@ public class FileUploadUtil {
             throw new IllegalArgumentException("Upload folder must use a relative URL-style path");
         }
 
-        Path uploadsRoot = Paths.get("uploads").toAbsolutePath().normalize();
+        Path uploadsRoot = uploadRoot();
         Path dir = uploadsRoot.resolve(folder).normalize();
         if (!dir.startsWith(uploadsRoot)) {
             throw new IllegalArgumentException("Upload folder must stay inside the uploads directory");

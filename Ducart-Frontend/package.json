@@ -23,13 +23,38 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "eslint src --ext .js,.jsx --max-warnings 0",
-    "coverage": "react-scripts test --watchAll=false --runInBand --coverage"
+    "lint": "eslint src e2e playwright.config.cjs --ext .js,.jsx,.cjs --max-warnings 0",
+    "coverage": "react-scripts test --watchAll=false --runInBand --coverage",
+    "test:e2e": "playwright test",
+    "e2e:serve": "serve -s build -l tcp://127.0.0.1:3001 --no-clipboard",
+    "e2e:build": "node e2e/build.cjs"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "e2e/**/*.cjs",
+          "playwright.config.cjs"
+        ],
+        "env": {
+          "node": true
+        }
+      },
+      {
+        "files": [
+          "e2e/**/*.cjs"
+        ],
+        "extends": [
+          "plugin:playwright/recommended"
+        ],
+        "rules": {
+          "testing-library/prefer-screen-queries": "off"
+        }
+      }
     ]
   },
   "browserslist": {
@@ -45,9 +70,12 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "7.21.11",
+    "@playwright/test": "1.64.1",
     "@testing-library/react": "^14.3.1",
     "eslint": "8.57.1",
-    "@babel/plugin-proposal-private-property-in-object": "7.21.11"
+    "eslint-plugin-playwright": "2.12.1",
+    "serve": "14.2.6"
   },
   "jest": {
     "collectCoverageFrom": [

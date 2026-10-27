@@ -6,7 +6,7 @@ Full-stack e-commerce application built with React, Spring Boot, MySQL, Docker, 
 
 [Open the frontend](https://redbone12.github.io/DUCART/). GitHub Pages hosts the frontend only; live catalogue data, authentication, and other API features require a separately deployed backend.
 
-In repository **Settings → Pages**, select **GitHub Actions** as the source. The workflow in `.github/workflows/quality.yml` checks every pull request and push to `main`. Pages publishing waits for both backend and frontend quality jobs, and deploys their verified build on `main`.
+In repository **Settings → Pages**, select **GitHub Actions** as the source. The workflow in `.github/workflows/quality.yml` checks every pull request and push to `main`. Pages publishing waits for all four quality and integration jobs, and deploys their verified build on `main`.
 
 The Pages build uses the repository base path for assets and hash routes (for example, `#/shop`) so refreshing a page works on static hosting. Local development keeps browser routes. If a backend is deployed later, set the repository Actions variable `REACT_APP_SERVER` to its HTTPS URL, allow the Pages origin in backend CORS, and rebuild. Never put secrets in frontend variables.
 
@@ -44,6 +44,7 @@ DUCART is a role-based online shopping platform with a React frontend, Spring Bo
 - Server-calculated checkout totals, transactional inventory deductions, and idempotent order placement ([behavior and database upgrade](docs/checkout.md))
 - Jest and React Testing Library frontend tests
 - JUnit 5, Mockito, MockMvc, H2, and JaCoCo backend tests
+- Testcontainers MySQL integration tests and real Chromium purchase/admin journeys ([run locally](docs/integration-testing.md))
 - Multi-stage Docker builds and Docker Compose orchestration
 - Jenkins pipeline for testing, building, deployment, and smoke testing
 

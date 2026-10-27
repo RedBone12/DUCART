@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -12,11 +12,7 @@ import { createMultipartRecord } from "../../Redux/ActionCreators/ProductActionC
 import { getMaincategory } from "../../Redux/ActionCreators/MaincategoryActionCreators";
 import { getSubcategory } from "../../Redux/ActionCreators/SubcategoryActionCreators";
 import { getBrand } from "../../Redux/ActionCreators/BrandActionCreators";
-
-let rte;
-
 export default function AdminCreateProduct() {
-  const refdiv = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -112,7 +108,7 @@ export default function AdminCreateProduct() {
             finalPrice: fp,
             stock: data.stock,
             stockQuantity,
-            description: rte?.getHTMLCode() || "",
+            description: data.description,
             active: data.active,
           }),
         ],
@@ -223,7 +219,7 @@ export default function AdminCreateProduct() {
   //           finalPrice: fp,
   //           stock: data.stock,
   //           stockQuantity: stockQuantity,
-  //           description: rte.getHTMLCode(),
+  //           description: data.description,
   //           active: data.active,
   //         }),
   //       ],
@@ -242,11 +238,6 @@ export default function AdminCreateProduct() {
   //   dispatch(createMultipartRecord(formData));
   //   navigate("/admin/product");
   // };
-
-  useEffect(() => {
-    rte = new window.RichTextEditor(refdiv.current);
-    rte.setHTMLCode("");
-  }, []);
 
   useEffect(() => {
     dispatch(getMaincategory());
@@ -442,8 +433,15 @@ export default function AdminCreateProduct() {
               </div>
 
               <div className="mb-3">
-                <label>Description</label>
-                <div ref={refdiv}></div>
+                <label htmlFor="product-description">Description</label>
+                <textarea
+                  id="product-description"
+                  name="description"
+                  className="form-control border-3 border-primary"
+                  rows={6}
+                  value={data.description || ""}
+                  onChange={(event) => setData((previous) => ({ ...previous, description: event.target.value }))}
+                />
               </div>
 
               <div className="row">

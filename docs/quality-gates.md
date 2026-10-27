@@ -1,8 +1,8 @@
 # Quality gates
 
 Every pull request and every push to main runs the Quality workflow. There are no
-path filters or skipped checks for documentation-only changes. The two stable
-required-check names are `Backend quality` and `Frontend quality`.
+path filters or skipped checks for documentation-only changes. The four stable
+required-check names are `Backend quality`, `Frontend quality`, `MySQL integration` and `Browser E2E`.
 
 | Check | Enforced requirement |
 | --- | --- |
@@ -13,6 +13,8 @@ required-check names are `Backend quality` and `Frontend quality`.
 | Frontend ESLint | Zero errors and zero warnings in application and test files |
 | Jest | At least 90% statements, lines and functions; 80% branches |
 | Frontend build | Production build succeeds with CI=true |
+| MySQL integration | 22 real MySQL query, constraint, checkout and JWT tests; separate coverage report |
+| Browser E2E | Three Chromium journeys against real Spring Boot and MySQL |
 
 JaCoCo has no package exclusions. Its standard generated-bytecode filters still
 apply. Jest collects every JS/JSX file under src, including unimported files;
@@ -49,6 +51,11 @@ JaCoCo configuration instruments classes offline, then restores them after tests
 Local verification on 25 October 2026 passed 471 backend tests and 331 frontend
 tests, Checkstyle, SpotBugs, ESLint and the CI=true Pages production build.
 
+The integration update verified on 27 October passed 473 backend unit tests,
+22 real MySQL integration tests, 332 frontend tests and all three Chromium
+journeys. ESLint and the CI=true browser production build also passed. The
+coverage table below records the original 25 October baseline.
+
 | Coverage | Backend | Frontend |
 | --- | --- | --- |
 | Lines | 96.84% | 99.10% |
@@ -71,14 +78,13 @@ incomplete item after a setter failure.
 
 ## Pull requests and publishing
 
-Configure main to require a pull request and both quality checks, with the branch
+Configure main to require a pull request and all four checks, with the branch
 up to date before merging. Apply the rules to administrators too, and disallow
 force pushes and branch deletion. Zero approval reviews are required so a solo
 maintainer can merge a reviewed change without needing a second account.
 
 The old pages.yml workflow is replaced by quality.yml. On main, the frontend
-job creates the Pages artifact. Publishing depends on both backend and frontend
-jobs succeeding. Pull requests run the same quality commands but never deploy.
+job creates the Pages artifact. Publishing depends on all four test and quality jobs succeeding. Pull requests run the same quality commands but never deploy.
 No CI=false or lint-disable environment override is used.
 
 Jenkinsfile invokes the same Maven command and frontend lint, coverage and build
@@ -86,3 +92,5 @@ commands. This does not prove a Jenkins server has executed the pipeline. The
 repository webhook audit on 25 October 2026 found zero hooks; GitHub Actions
 supplies the required PR checks without a Jenkins webhook. A future Jenkins
 integration should provide its own verified run rather than duplicate this claim.
+
+For isolated database and browser commands, scope and reports, see [integration testing](integration-testing.md).

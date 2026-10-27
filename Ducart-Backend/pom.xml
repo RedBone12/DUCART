@@ -34,8 +34,14 @@
 		<mockito.version>5.17.0</mockito.version>
 		<coverage.line.minimum>0.90</coverage.line.minimum>
 		<coverage.branch.minimum>0.80</coverage.branch.minimum>
+		<testcontainers.version>1.21.4</testcontainers.version>
 	</properties>
 	<dependencies>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mysql</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
@@ -238,4 +244,47 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>mysql-it</id>
+			<build><plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution><id>integration-report</id><phase>verify</phase><goals><goal>report-integration</goal></goals>
+						<configuration>
+							<dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
+							<outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<includes><include>**/*MySqlIT.java</include></includes>
+					<failIfNoTests>true</failIfNoTests>
+					<!-- Relative output paths also work when the Windows checkout path contains Unicode. -->
+					<argLine>-javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=target/jacoco-it.exec -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+					<useManifestOnlyJar>false</useManifestOnlyJar>
+					<systemPropertyVariables>
+						<jacoco-agent.destfile>target/jacoco-it.exec</jacoco-agent.destfile>
+					</systemPropertyVariables>
+				</configuration>
+				<executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions>
+			</plugin></plugins></build>
+		</profile>
+		<profile>
+			<id>browser-server</id>
+			<build><plugins><plugin>
+				<groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.6.3</version>
+				<configuration>
+					<mainClass>com.prashant.api.ecom.ducart.support.BrowserTestServer</mainClass>
+					<classpathScope>test</classpathScope>
+				</configuration>
+			</plugin></plugins></build>
+		</profile>
+	</profiles>
 </project>

@@ -26,3 +26,5 @@ Thumbs.db
 
 # Local database backups
 backups/
+Ducart-Frontend/playwright-report/
+Ducart-Frontend/test-results/
