@@ -57,8 +57,12 @@ Three Chromium journeys exercise real requests without intercepted API fixtures:
   update and deletion, including persisted API assertions.
 - Buyer exclusion from administrator pages and product-write APIs.
 
-Reports are in `playwright-report`; failures retain screenshots, videos and traces
-under `test-results`. Open a report with `npx.cmd playwright show-report`.
+Reports are in `playwright-report`; failures retain screenshots and traces under
+`test-results`, plus videos in the default local Chromium run. CI uses the
+Ubuntu 24.04 runner's installed stable Chrome (`PLAYWRIGHT_CHANNEL=chrome`),
+prints its version, and disables video to avoid a separate FFmpeg download.
+It exercises the same three journeys without an apt/browser installation step.
+Open a report with `npx.cmd playwright show-report`.
 Firefox, WebKit, payment gateways and production deployments are outside this
 suite's scope.
 

@@ -117,10 +117,11 @@ jobs:
 
   browser:
     name: Browser E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       CI: 'true'
+      PLAYWRIGHT_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v4
@@ -135,8 +136,8 @@ jobs:
           cache-dependency-path: Ducart-Frontend/package-lock.json
       - run: npm ci --no-audit --no-fund
         working-directory: Ducart-Frontend
-      - run: npx playwright install --with-deps chromium
-        working-directory: Ducart-Frontend
+      - name: Verify the runner's installed Chrome
+        run: google-chrome --version
       - name: Build the isolated browser-test frontend
         run: npm run e2e:build
         working-directory: Ducart-Frontend
