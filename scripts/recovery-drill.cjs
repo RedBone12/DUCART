@@ -38,10 +38,14 @@ function current(target) {
 
 function dc(target, argv, opts = {}) {
   const config = configurations.get(target);
+  const generatedEnv = Object.fromEntries(fs.readFileSync(config.file, "utf8").split(/\r?\n/).filter(line => line.includes("=")).map(line => {
+    const separator = line.indexOf("=");
+    return [line.slice(0, separator), line.slice(separator + 1)];
+  }));
   const images = fs.existsSync(path.join(root, "deploy/.state", target + ".json")) ? current(target) : { backend: "ducart-backend:" + release, frontend: "ducart-frontend:" + release };
   return execute(docker, ["compose", "--env-file", config.file, "-f", path.join(root, "deploy/compose.yaml"), "-p", target, ...argv], {
     ...opts,
-    env: { ...process.env, BACKEND_IMAGE: images.backend, FRONTEND_IMAGE: images.frontend, COMPOSE_PROFILES: "local" },
+    env: { ...process.env, ...generatedEnv, BACKEND_IMAGE: images.backend, FRONTEND_IMAGE: images.frontend, COMPOSE_PROFILES: "local" },
   });
 }
 

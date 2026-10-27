@@ -58,8 +58,10 @@ journeys. ESLint and the CI=true browser production build also passed. The
 coverage table below records the original 25 October baseline.
 
 The production update adds two production-origin CORS tests and a MySQL Flyway
-migration/validation test: 475 backend tests and 23 MySQL integration tests pass
-locally. The recovery job separately executes real deployment and storage drills;
+migration/validation test. A concurrency regression also ensures fresh password
+reset limit buckets cannot merge over another request's counter. The expanded
+suites contain 476 backend tests and 38 MySQL integration tests. The recovery job
+separately executes real deployment and storage drills;
 its report distinguishes local TLS verification from a public cloud deployment.
 
 | Coverage | Backend | Frontend |

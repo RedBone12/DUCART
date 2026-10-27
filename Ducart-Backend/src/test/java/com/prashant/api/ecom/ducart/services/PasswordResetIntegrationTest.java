@@ -190,19 +190,34 @@ class PasswordResetIntegrationTest {
     @Test
     void concurrentRateLimitCreationDoesNotAllowExtraRequests() throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch start = new CountDownLatch(1);
         try {
-            Callable<Boolean> task = () -> {
-                if (!start.await(10, TimeUnit.SECONDS)) return false;
-                return limiter.consume("concurrent-limit", "shared-client", 1);
-            };
-            Future<Boolean> first = executor.submit(task);
-            Future<Boolean> second = executor.submit(task);
-            start.countDown();
-            int successes = first.get(20, TimeUnit.SECONDS) ? 1 : 0;
-            if (second.get(20, TimeUnit.SECONDS)) successes++;
-            assertEquals(1, successes);
+            for (int round = 0; round < 20; round++) {
+                String subject = "shared-client-" + round;
+                CountDownLatch start = new CountDownLatch(1);
+                Callable<Boolean> task = () -> {
+                    if (!start.await(10, TimeUnit.SECONDS)) return false;
+                    return limiter.consume("concurrent-limit", subject, 1);
+                };
+                Future<Boolean> first = executor.submit(task);
+                Future<Boolean> second = executor.submit(task);
+                start.countDown();
+                int successes = first.get(20, TimeUnit.SECONDS) ? 1 : 0;
+                if (second.get(20, TimeUnit.SECONDS)) successes++;
+                assertEquals(1, successes);
+            }
         } finally { executor.shutdownNow(); }
+    }
+
+    @Test
+    void aFreshAssignedKeyCannotOverwriteAnExistingCounter() {
+        assertTrue(limiter.consume("insert-race", "same-client", 1));
+        PasswordResetLimit competing = new PasswordResetLimit();
+        competing.setBucketKey(ResetTokenSupport.hash("insert-race:same-client"));
+        competing.setWindowStart(now);
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> limits.saveAndFlush(competing));
+        assertFalse(limiter.consume("insert-race", "same-client", 1));
+        assertEquals(1, limits.findById(competing.getBucketKey()).orElseThrow().getAttempts());
     }
 
     @Test

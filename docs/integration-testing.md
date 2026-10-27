@@ -23,6 +23,9 @@ Only the deliberate persistence-failure scenario uses a repository spy to inject
 the failure that must roll back the transaction.
 
 Reports: `target/failsafe-reports` and `target/site/jacoco-it/index.html`.
+The suite also runs password-reset token and limiter tests against real MySQL,
+including repeated concurrent first-insert attempts. New assigned-key buckets
+must insert rather than merge over an existing counter.
 Integration coverage is reported separately from the existing unit coverage
 gate; there is no claim that these focused journeys cover the entire application.
 The default `clean verify` remains independent of Docker.
