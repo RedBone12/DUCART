@@ -1,0 +1,139 @@
+name: ducart-production
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?required}
+      MYSQL_USER: ${MYSQL_USER:?required}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?required}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=TCP -h 127.0.0.1 -u "$${MYSQL_USER}" "$${MYSQL_DATABASE}" -Nse "SELECT 1"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    logging: *logging
+
+  backend:
+    image: ${BACKEND_IMAGE:?set a release image}
+    build:
+      context: ../Ducart-Backend
+      args:
+        RELEASE_ID: ${RELEASE_ID:-development}
+    restart: unless-stopped
+    stop_grace_period: 35s
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?required}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?required}
+      MAIL_HOST: ${MAIL_HOST:?required}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-true}
+      PASSWORD_RESET_MAIL_FROM: ${PASSWORD_RESET_MAIL_FROM:?required}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+    mem_limit: 768m
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    volumes:
+      - uploads-data:/app/uploads
+    networks: [application, database]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:8081/actuator/health/readiness']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+    logging: *logging
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?set a release image}
+    build:
+      context: ../Ducart-Frontend
+      args:
+        REACT_APP_SERVER: /api
+        RELEASE_ID: ${RELEASE_ID:-development}
+    restart: unless-stopped
+    networks: [application]
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1/']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    logging: *logging
+
+  gateway:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_HOST: ${SITE_HOST:?required}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN}
+      TLS_DIRECTIVE: ${TLS_DIRECTIVE:-}
+    ports:
+      - ${BIND_ADDRESS:-0.0.0.0}:${HTTP_PORT:-80}:80
+      - ${BIND_ADDRESS:-0.0.0.0}:${HTTPS_PORT:-443}:443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+      - maintenance-data:/maintenance:ro
+    networks: [application]
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    logging: *logging
+
+  files:
+    image: alpine:3.24
+    profiles: [tools]
+    network_mode: none
+    volumes:
+      - uploads-data:/data
+
+  mailpit:
+    image: axllent/mailpit:v1
+    profiles: [local]
+    networks: [application]
+
+  maintenance:
+    image: alpine:3.24
+    profiles: [tools]
+    network_mode: none
+    volumes:
+      - maintenance-data:/data
+
+networks:
+  application:
+  database:
+    internal: true
+
+volumes:
+  mysql-data:
+  uploads-data:
+  caddy-data:
+  caddy-config:
+  maintenance-data:

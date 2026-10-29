@@ -87,13 +87,11 @@ export default function AdminUpdateBrand() {
     }
   }
 
+  useEffect(() => { dispatch(getBrand()); }, [dispatch]);
   useEffect(() => {
-    (() => {
-      dispatch(getBrand());
-      if (BrandStateData.length)
-        setData(BrandStateData.find((x) => x.id === Number(id)));
-    })();
-  }, [id, BrandStateData.length]);
+    const item = BrandStateData.find((entry) => String(entry.id) === String(id));
+    if (item) setData(item);
+  }, [BrandStateData, id]);
   return (
     <>
       <HeroSection title="Admin" />
@@ -137,7 +135,7 @@ export default function AdminUpdateBrand() {
                   <label>Pic*</label>
                   <input
                     type="file"
-                    name="pic"
+                    name="pic" aria-label="Catalog picture"
                     onChange={getInputData}
                     className={`form-control border-3 ${
                       show && errorMessage.pic

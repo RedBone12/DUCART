@@ -18,6 +18,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class SecurityConfigTest {
+    @Test
+    void browserTestOriginIsAllowedWithoutCookieCredentials() throws Exception {
+        mockMvc.perform(options("/user/login").header("Origin", "http://127.0.0.1:3001")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://127.0.0.1:3001"))
+                .andExpect(header().doesNotExist("Access-Control-Allow-Credentials"));
+    }
+
+    @Test
+    void unknownBrowserOriginIsRejected() throws Exception {
+        mockMvc.perform(options("/user/login").header("Origin", "https://untrusted.example")
+                .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    }
 
     @Autowired MockMvc mockMvc;
     @Autowired PasswordEncoder passwordEncoder;
@@ -62,10 +79,22 @@ class SecurityConfigTest {
     }
 
     @Test
-    void forgotPasswordPut_shouldBePublic() throws Exception {
+    void legacyPhoneReset_shouldNotBePublic() throws Exception {
         mockMvc.perform(put("/user/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"usernameOrEmail\":\"missing\",\"phone\":\"0000000\",\"newPassword\":\"secret\"}"))
-                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()));
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void passwordResetRequestPost_shouldBePublicButValidateBody() throws Exception {
+        mockMvc.perform(post("/user/forgot-password").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void passwordResetConfirmationPost_shouldBePublicButRequireToken() throws Exception {
+        mockMvc.perform(post("/user/reset-password").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -22,25 +22,17 @@ export default function AdminBrand() {
   function deleteRecord(id) {
     if (window.confirm("Are You Sure to Delete that Item : ")) {
       dispatch(deleteBrand({ id: id }));
-      getAPIData();
+      dispatch(getBrand());
     }
   }
 
-  function getAPIData() {
-    dispatch(getBrand());
+  useEffect(() => { dispatch(getBrand()); }, [dispatch]);
 
-    if (BrandStateData.length) setData(BrandStateData);
-    else setData([]);
-
-    let time = setTimeout(() => {
-      $("#DataTable").DataTable();
-    }, 500);
-    return time;
-  }
   useEffect(() => {
-    let time = getAPIData();
-    return () => clearTimeout(time);
-  }, [BrandStateData.length]);
+    setData(BrandStateData);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => clearTimeout(timer);
+  }, [BrandStateData]);
   //brand state data length dependency is used to re render the component when brand state data length changes like after delete or add new brand
   return (
     <>
@@ -89,7 +81,7 @@ export default function AdminBrand() {
                             height={50}
                             width={80}
                             className="rounded"
-                            alt="Brand Image"
+                            alt="Brand"
                           />
                         </Link>
                       </td>
@@ -144,11 +136,11 @@ export default function AdminBrand() {
 //         }
 //       })
 //       response = await response.json()
-//       getAPIData()
+//       dispatch(getBrand());
 //     }
 //   }
 
-//   async function getAPIData() {
+//   async function dispatch(getBrand()); {
 //     let response = await fetch(`${process.env.REACT_APP_SERVER}/brand`, {
 //       method: "GET",
 //       headers: {
@@ -167,7 +159,7 @@ export default function AdminBrand() {
 //     return time
 //   }
 //   useEffect(() => {
-//     let time = getAPIData()
+//     let time = dispatch(getBrand());
 //     return () => clearTimeout(time)
 //   }, [])
 

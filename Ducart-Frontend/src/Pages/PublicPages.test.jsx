@@ -69,12 +69,12 @@ function renderWithApp(ui, state = initialState) {
     preloadedState: state,
   });
   const dispatchSpy = jest.spyOn(store, "dispatch");
-  const result = render(
+  const view = render(
     <Provider store={store}>
       <MemoryRouter>{ui}</MemoryRouter>
     </Provider>,
   );
-  return { ...result, dispatchSpy };
+  return { ...view, dispatchSpy };
 }
 
 describe("public components and pages", () => {

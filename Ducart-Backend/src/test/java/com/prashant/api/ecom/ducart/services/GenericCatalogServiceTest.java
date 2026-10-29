@@ -27,6 +27,25 @@ class GenericCatalogServiceTest {
 
     private GenericCatalogService<TestCatalogItem> service;
 
+    @Test
+    void create_whenPictureSetterFails_doesNotSilentlySaveAnIncompleteItem() throws Exception {
+        String[] attemptedPath = new String[1];
+        TestCatalogItem broken = new TestCatalogItem() {
+            @Override public void setPic(String pic) {
+                attemptedPath[0] = pic;
+                throw new IllegalStateException("Picture update failed");
+            }
+        };
+        MockMultipartFile picture = new MockMultipartFile("pic", "test.png", "image/png", new byte[]{1});
+        try {
+            assertThrows(org.springframework.beans.BeansException.class, () -> service.create(broken, picture));
+            verify(repo, never()).save(any());
+        } finally {
+            if (attemptedPath[0] != null)
+                Files.deleteIfExists(Path.of("uploads", "test-folder", Path.of(attemptedPath[0]).getFileName().toString()));
+        }
+    }
+
     @BeforeEach
     void setUp() {
         // GenericCatalogService is not managed by Spring here.

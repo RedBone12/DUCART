@@ -4,7 +4,6 @@ import com.prashant.api.ecom.ducart.entities.User;
 import com.prashant.api.ecom.ducart.exception.BadRequestException;
 import com.prashant.api.ecom.ducart.exception.ConflictException;
 import com.prashant.api.ecom.ducart.exception.ResourceNotFoundException;
-import com.prashant.api.ecom.ducart.modal.ForgotPasswordDTO;
 import com.prashant.api.ecom.ducart.modal.ProfileDTO;
 import com.prashant.api.ecom.ducart.repositories.UserRepo;
 import org.junit.jupiter.api.Test;
@@ -337,110 +336,6 @@ class UserServiceTest {
         } finally {
             Files.deleteIfExists(storedFile);
         }
-    }
-
-    @Test
-    void resetPassword_whenUserExistsByUsernameAndPhoneMatches_shouldEncodeAndSaveNewPassword() {
-        User user = user();
-
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        dto.setUsernameOrEmail("alice");
-        dto.setPhone("1234567890");
-        dto.setNewPassword("newPassword");
-
-        when(userRepo.findByUsername("alice")).thenReturn(Optional.of(user));
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
-        when(userRepo.save(user)).thenReturn(user);
-
-        User result = userService.resetPassword(dto);
-
-        assertEquals("encodedNewPassword", result.getPassword());
-        verify(passwordEncoder).encode("newPassword");
-        verify(userRepo).save(user);
-    }
-
-    @Test
-    void resetPassword_whenUserExistsByEmail_shouldEncodeAndSaveNewPassword() {
-        User user = user();
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        dto.setUsernameOrEmail("alice@test.com");
-        dto.setPhone("1234567890");
-        dto.setNewPassword("newPassword");
-        when(userRepo.findByUsername("alice@test.com")).thenReturn(Optional.empty());
-        when(userRepo.findByEmail("alice@test.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
-        when(userRepo.save(user)).thenReturn(user);
-
-        User result = userService.resetPassword(dto);
-
-        assertEquals("encodedNewPassword", result.getPassword());
-        verify(userRepo).save(user);
-    }
-
-    @Test
-    void resetPassword_whenRequestOrRequiredValuesAreMissing_shouldThrowBadRequest() {
-        ForgotPasswordDTO nullIdentity = new ForgotPasswordDTO();
-        nullIdentity.setPhone("1234567890");
-        nullIdentity.setNewPassword("newPassword");
-        ForgotPasswordDTO blankIdentity = new ForgotPasswordDTO();
-        blankIdentity.setUsernameOrEmail(" ");
-        blankIdentity.setPhone("1234567890");
-        blankIdentity.setNewPassword("newPassword");
-        ForgotPasswordDTO nullPhone = new ForgotPasswordDTO();
-        nullPhone.setUsernameOrEmail("alice");
-        nullPhone.setNewPassword("newPassword");
-        ForgotPasswordDTO blankPhone = new ForgotPasswordDTO();
-        blankPhone.setUsernameOrEmail("alice");
-        blankPhone.setPhone(" ");
-        blankPhone.setNewPassword("newPassword");
-        ForgotPasswordDTO nullPassword = new ForgotPasswordDTO();
-        nullPassword.setUsernameOrEmail("alice");
-        nullPassword.setPhone("1234567890");
-        ForgotPasswordDTO blankPassword = new ForgotPasswordDTO();
-        blankPassword.setUsernameOrEmail("alice");
-        blankPassword.setPhone("1234567890");
-        blankPassword.setNewPassword(" ");
-
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(null));
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(nullIdentity));
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(blankIdentity));
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(nullPhone));
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(blankPhone));
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(nullPassword));
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(blankPassword));
-
-        verify(userRepo, never()).save(any(User.class));
-    }
-
-    @Test
-    void resetPassword_whenUserDoesNotExist_shouldThrowResourceNotFoundException() {
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        dto.setUsernameOrEmail("missing");
-        dto.setPhone("1234567890");
-        dto.setNewPassword("newPassword");
-
-        when(userRepo.findByUsername("missing")).thenReturn(Optional.empty());
-        when(userRepo.findByEmail("missing")).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> userService.resetPassword(dto));
-
-        verify(userRepo, never()).save(any(User.class));
-    }
-
-    @Test
-    void resetPassword_whenPhoneDoesNotMatch_shouldThrowBadRequestException() {
-        User user = user();
-
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        dto.setUsernameOrEmail("alice");
-        dto.setPhone("0000000000");
-        dto.setNewPassword("newPassword");
-
-        when(userRepo.findByUsername("alice")).thenReturn(Optional.of(user));
-
-        assertThrows(BadRequestException.class, () -> userService.resetPassword(dto));
-
-        verify(userRepo, never()).save(any(User.class));
     }
 
     @Test

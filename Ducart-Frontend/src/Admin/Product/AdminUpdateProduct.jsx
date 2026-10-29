@@ -16,10 +16,9 @@ import { getMaincategory } from "../../Redux/ActionCreators/MaincategoryActionCr
 import { getSubcategory } from "../../Redux/ActionCreators/SubcategoryActionCreators";
 import { getBrand } from "../../Redux/ActionCreators/BrandActionCreators";
 
-var rte;
 export default function AdminupdateProduct() {
   let { id } = useParams();
-  let refdiv = useRef(null);
+  const loadedProductId = useRef(null);
   let [data, setData] = useState({
     name: "",
     maincategory: "",
@@ -103,7 +102,7 @@ export default function AdminupdateProduct() {
             finalPrice: fp,
             stock: data.stock,
             stockQuantity: stockQuantity,
-            description: rte.getHTMLCode(),
+            description: data.description,
             active: data.active,
           }),
         ],
@@ -136,15 +135,14 @@ export default function AdminupdateProduct() {
 
   useEffect(() => {
     dispatch(getProduct());
-    rte = new window.RichTextEditor(refdiv.current);
   }, [dispatch]);
 
   useEffect(() => {
-    if (ProductStateData.length) {
+    if (loadedProductId.current !== id && ProductStateData.length) {
       const item = ProductStateData.find((x) => String(x.id) === String(id));
       if (item) {
-        rte.setHTMLCode(item.description);
         setData(item);
+        loadedProductId.current = id;
       }
     }
   }, [ProductStateData, id]);
@@ -170,6 +168,7 @@ export default function AdminupdateProduct() {
                 <input
                   type="text"
                   name="name"
+                  aria-label="Product name"
                   value={data.name}
                   onChange={getInputData}
                   className={`form-control border-3 ${
@@ -339,8 +338,15 @@ export default function AdminupdateProduct() {
               </div>
 
               <div className="mb-3">
-                <label>Description</label>
-                <div ref={refdiv}></div>
+                <label htmlFor="product-description">Description</label>
+                <textarea
+                  id="product-description"
+                  name="description"
+                  className="form-control border-3 border-primary"
+                  rows={6}
+                  value={data.description || ""}
+                  onChange={(event) => setData((previous) => ({ ...previous, description: event.target.value }))}
+                />
               </div>
 
               <div className="row">
@@ -369,7 +375,7 @@ export default function AdminupdateProduct() {
                   <label>Pic*</label>
                   <input
                     type="file"
-                    name="pic"
+                    name="pic" aria-label="Product pictures"
                     multiple
                     onChange={getInputData}
                     className={`form-control border-3 ${
@@ -423,7 +429,7 @@ export default function AdminupdateProduct() {
                           setFlag(!flag);
                         }}
                         src={`${process.env.REACT_APP_SERVER}${item}`}
-                        alt={`Remove ${data.name} picture ${index + 1}`}
+                        alt={`Remove ${data.name} ${index + 1}`}
                         height={50}
                         width={50}
                         className="mx-1"

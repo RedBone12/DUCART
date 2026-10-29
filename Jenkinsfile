@@ -25,7 +25,9 @@ pipeline {
                 dir('Ducart-Frontend') {
                     bat 'npm.cmd ci'
                     withEnv(['CI=true']) {
-                        bat 'npm.cmd test -- --watchAll=false'
+                        bat 'npm.cmd run lint'
+                        bat 'npm.cmd run coverage'
+                        bat 'npm.cmd run build'
                     }
                 }
             }

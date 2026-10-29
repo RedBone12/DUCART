@@ -20,7 +20,7 @@ export default function AdminNewsletter() {
   function deleteRecord(id) {
     if (window.confirm("Are You Sure to Delete that Item : ")) {
       dispatch(deleteNewsletter({ id: id }))
-      getAPIData()
+      dispatch(getNewsletter());
     }
   }
   function updateRecord(id) {
@@ -34,23 +34,13 @@ export default function AdminNewsletter() {
     }
   }
 
-  function getAPIData() {
-    dispatch(getNewsletter())
+  useEffect(() => { dispatch(getNewsletter()); }, [dispatch]);
 
-    if (NewsletterStateData.length)
-      setData(NewsletterStateData)
-    else
-      setData([])
-
-    let time = setTimeout(() => {
-      $('#DataTable').DataTable()
-    }, 500);
-    return time
-  }
   useEffect(() => {
-    let time = getAPIData()
-    return () => clearTimeout(time)
-  }, [NewsletterStateData.length])
+    setData(NewsletterStateData);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => clearTimeout(timer);
+  }, [NewsletterStateData]);
 
   return (
     <>
@@ -134,11 +124,11 @@ export default function AdminNewsletter() {
 //         }
 //       })
 //       response = await response.json()
-//       getAPIData()
+//       dispatch(getNewsletter());
 //     }
 //   }
 
-//   async function getAPIData() {
+//   async function dispatch(getNewsletter()); {
 //     let response = await fetch(`${process.env.REACT_APP_SERVER}/Newsletter`, {
 //       method: "GET",
 //       headers: {
@@ -157,7 +147,7 @@ export default function AdminNewsletter() {
 //     return time
 //   }
 //   useEffect(() => {
-//     let time = getAPIData()
+//     let time = dispatch(getNewsletter());
 //     return () => clearTimeout(time)
 //   }, [])
 

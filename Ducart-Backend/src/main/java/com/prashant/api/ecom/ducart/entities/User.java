@@ -27,6 +27,8 @@ public class User {
     private String phone;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    @ToString.Exclude
     private String password;
 
     private String role = "Buyer";

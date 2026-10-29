@@ -71,11 +71,11 @@ function renderPage(element, route, pattern = route, overrides = {}) {
       </MemoryRouter>
     </Provider>,
   );
-  return dispatchSpy;
+  return { dispatchSpy };
 }
 
-function actionOf(spy, type) {
-  return spy.mock.calls.map(([action]) => action).find((action) => action.type === type);
+function actionOf(dispatchSpy, type) {
+  return dispatchSpy.mock.calls.map(([action]) => action).find((action) => action.type === type);
 }
 
 describe("admin orders, messages, subscribers, and users", () => {
@@ -121,18 +121,18 @@ describe("admin orders, messages, subscribers, and users", () => {
       }),
     });
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    const spy = renderPage(
+    const { dispatchSpy } = renderPage(
       <AdminCheckoutShow />,
       "/admin/checkout/show/11",
       "/admin/checkout/show/:id",
     );
     expect(await screen.findByText(/Buyer One/)).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     const selects = screen.getAllByRole("combobox");
     fireEvent.change(selects[0], { target: { value: "Delivered" } });
     fireEvent.change(selects[1], { target: { value: "Done" } });
     fireEvent.click(screen.getByRole("button", { name: "Update Status" }));
-    expect(actionOf(spy, UPDATE_CHECKOUT).payload).toEqual(
+    expect(actionOf(dispatchSpy, UPDATE_CHECKOUT).payload).toEqual(
       expect.objectContaining({ orderStatus: "Delivered", paymentStatus: "Done" }),
     );
   });
@@ -162,61 +162,61 @@ describe("admin orders, messages, subscribers, and users", () => {
 
   test("lists contact messages and deletes an inactive one", () => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    const spy = renderPage(<AdminContactUs />, "/admin/contactus", undefined, {
+    const { dispatchSpy } = renderPage(<AdminContactUs />, "/admin/contactus", undefined, {
       ContactUsStateData: [{ ...contact, active: false }],
     });
     expect(screen.getByText("Question about an existing order")).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getByRole("button"));
-    expect(actionOf(spy, DELETE_CONTACT_US).payload).toEqual({ id: 21 });
+    expect(actionOf(dispatchSpy, DELETE_CONTACT_US).payload).toEqual({ id: 21 });
   });
 
   test("shows an active message and marks it inactive", async () => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    const spy = renderPage(
+    const { dispatchSpy } = renderPage(
       <AdminContactUsShow />,
       "/admin/contactus/show/21",
       "/admin/contactus/show/:id",
     );
     expect(await screen.findByText(contact.message)).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getByRole("button", { name: "Update Status" }));
-    expect(actionOf(spy, UPDATE_CONTACT_US).payload.active).toBe(false);
+    expect(actionOf(dispatchSpy, UPDATE_CONTACT_US).payload.active).toBe(false);
   });
 
   test("deletes an inactive message from its detail page", async () => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    const spy = renderPage(
+    const { dispatchSpy } = renderPage(
       <AdminContactUsShow />,
       "/admin/contactus/show/21",
       "/admin/contactus/show/:id",
       { ContactUsStateData: [{ ...contact, active: false }] },
     );
     expect(await screen.findByRole("button", { name: "Delete" })).toBeInTheDocument();
-    spy.mockClear();
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(await screen.findByText("Contact destination")).toBeInTheDocument();
-    expect(actionOf(spy, DELETE_CONTACT_US).payload).toEqual({ id: "21" });
+    expect(actionOf(dispatchSpy, DELETE_CONTACT_US).payload).toEqual({ id: "21" });
   });
 
   test("toggles and deletes a newsletter subscriber", () => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    const spy = renderPage(<AdminNewsletter />, "/admin/newsletter");
-    spy.mockClear();
+    const { dispatchSpy } = renderPage(<AdminNewsletter />, "/admin/newsletter");
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getByTitle("Click to Change Status"));
-    expect(actionOf(spy, UPDATE_NEWSLETTER).payload.active).toBe(false);
+    expect(actionOf(dispatchSpy, UPDATE_NEWSLETTER).payload.active).toBe(false);
     fireEvent.click(screen.getByRole("button"));
-    expect(actionOf(spy, DELETE_NEWSLETTER).payload).toEqual({ id: 31 });
+    expect(actionOf(dispatchSpy, DELETE_NEWSLETTER).payload).toEqual({ id: 31 });
   });
 
   test("does not mutate subscribers when confirmations are cancelled", () => {
     jest.spyOn(window, "confirm").mockReturnValue(false);
-    const spy = renderPage(<AdminNewsletter />, "/admin/newsletter");
-    spy.mockClear();
+    const { dispatchSpy } = renderPage(<AdminNewsletter />, "/admin/newsletter");
+    dispatchSpy.mockClear();
     fireEvent.click(screen.getByTitle("Click to Change Status"));
     fireEvent.click(screen.getByRole("button"));
-    expect(actionOf(spy, UPDATE_NEWSLETTER)).toBeUndefined();
-    expect(actionOf(spy, DELETE_NEWSLETTER)).toBeUndefined();
+    expect(actionOf(dispatchSpy, UPDATE_NEWSLETTER)).toBeUndefined();
+    expect(actionOf(dispatchSpy, DELETE_NEWSLETTER)).toBeUndefined();
   });
 
   test("keeps an active contact message in the list without a delete control", () => {

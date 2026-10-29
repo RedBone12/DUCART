@@ -50,9 +50,9 @@ export default function AdminProduct() {
           <div className="col-md-9">
             <h5 className="bg-primary text-center text-light p-2">
               Product{" "}
-              <Link to="/admin/product/create" aria-label="Create product">
+              <Link to="/admin/product/create" aria-label="Create product" className="float-end">
                 {" "}
-                <i className="fa fa-plus text-light float-end"></i>
+                <i className="fa fa-plus text-light" aria-hidden="true"></i>
               </Link>
             </h5>
             <div className="table-responsive">

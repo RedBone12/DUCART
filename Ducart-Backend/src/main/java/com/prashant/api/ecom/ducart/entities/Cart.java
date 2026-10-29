@@ -15,6 +15,7 @@ public class Cart {
     private Long id;
     private String user;
     private String product;
+    private Long productId;
     private String name;
     private String brand;
     private String color;

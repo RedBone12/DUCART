@@ -62,6 +62,38 @@ class CartServiceTest {
     }
 
     @Test
+    void createCartItem_usesStableProductIdAndServerDetailsAfterRename() {
+        Product product = product();
+        product.setId(42L);
+        product.setName("Renamed phone");
+        Cart incoming = cartItem();
+        incoming.setProductId(42L);
+        incoming.setPrice(0.01);
+        when(productRepo.findById(42L)).thenReturn(Optional.of(product));
+        when(cartRepo.findByUserAndProduct("buyer1", "Renamed phone")).thenReturn(Optional.empty());
+        when(cartRepo.save(any(Cart.class))).thenAnswer(call -> call.getArgument(0));
+
+        Cart result = cartService.createCartItem(incoming, "buyer1");
+
+        assertEquals(42L, result.getProductId());
+        assertEquals("Renamed phone", result.getProduct());
+        assertEquals(900.0, result.getPrice());
+        verify(productRepo, never()).findByName(any());
+    }
+
+    @Test
+    void createCartItem_missingProductIdDoesNotFallbackToAnotherProductName() {
+        Cart incoming = cartItem();
+        incoming.setProductId(42L);
+        when(productRepo.findById(42L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> cartService.createCartItem(incoming, "buyer1"));
+
+        verify(productRepo, never()).findByName(any());
+        verify(cartRepo, never()).save(any());
+    }
+
+    @Test
     void getAllCartItems_shouldReturnAllCartItems() {
         Cart cart = cartItem();
 

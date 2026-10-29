@@ -1,8 +1,10 @@
 package com.prashant.api.ecom.ducart.controllers;
 
-import com.prashant.api.ecom.ducart.entities.Cart;
+import com.prashant.api.ecom.ducart.modal.CheckoutLineDTO;
 import com.prashant.api.ecom.ducart.exception.BadRequestException;
 import com.prashant.api.ecom.ducart.modal.CheckoutDTO;
+import com.prashant.api.ecom.ducart.modal.PlaceOrderRequest;
+import jakarta.validation.Valid;
 import com.prashant.api.ecom.ducart.services.CheckoutService;
 
 import org.springframework.http.HttpStatus;
@@ -32,19 +34,19 @@ public class CheckoutController {
             throw new BadRequestException("At least one product is required");
         }
 
-        if (dto.getSubtotal() != null && dto.getSubtotal() < 0) {
+        if (dto.getSubtotal() != null && dto.getSubtotal().signum() < 0) {
             throw new BadRequestException("Subtotal cannot be negative");
         }
 
-        if (dto.getShipping() != null && dto.getShipping() < 0) {
+        if (dto.getShipping() != null && dto.getShipping().signum() < 0) {
             throw new BadRequestException("Shipping cannot be negative");
         }
 
-        if (dto.getTotal() == null || dto.getTotal() < 0) {
+        if (dto.getTotal() == null || dto.getTotal().signum() < 0) {
             throw new BadRequestException("Valid total is required");
         }
 
-        for (Cart item : dto.getProducts()) {
+        for (CheckoutLineDTO item : dto.getProducts()) {
             if (item.getQty() == null || item.getQty() <= 0) {
                 throw new BadRequestException("Quantity must be greater than 0");
             }
@@ -75,11 +77,10 @@ public class CheckoutController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CheckoutDTO> create(@RequestBody CheckoutDTO dto,
+    public ResponseEntity<CheckoutDTO> create(@Valid @RequestBody PlaceOrderRequest request,
             Authentication authentication) throws Exception {
-        dto.setUser(authentication.getName());
-        validateCheckout(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(checkoutService.create(dto));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(checkoutService.placeOrder(authentication.getName(), request));
     }
 
     @PutMapping("/{id}")

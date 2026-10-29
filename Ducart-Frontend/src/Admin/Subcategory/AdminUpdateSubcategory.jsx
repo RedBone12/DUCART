@@ -85,7 +85,7 @@ export default function AdminUpdateSubcategory() {
 
   useEffect(() => {
     dispatch(getSubcategory());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     const category = SubcategoryStateData.find((x) => x.id === Number(id));
@@ -141,7 +141,7 @@ export default function AdminUpdateSubcategory() {
                   <label>Pic*</label>
                   <input
                     type="file"
-                    name="pic"
+                    name="pic" aria-label="Catalog picture"
                     onChange={getInputData}
                     className={`form-control border-3 ${
                       show && errorMessage.pic

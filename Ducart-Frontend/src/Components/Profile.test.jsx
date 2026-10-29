@@ -109,7 +109,7 @@ describe("Profile", () => {
   test("uses the checkout layout and handles a network failure", async () => {
     const { unmount } = setupProfile(user, "Checkout");
     expect(await screen.findByRole("cell", { name: "Demo Buyer" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Profile" }).parentElement).toHaveClass("d-none");
+    expect(screen.getByTestId("profile-picture")).toHaveClass("d-none");
     unmount();
 
     jest.restoreAllMocks();

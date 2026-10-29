@@ -9,9 +9,7 @@ import Sidebar from "../../Components/Sidebar";
 import HeroSection from "../../Components/HeroSection";
 import { formatCurrency } from "../../config/siteConfig";
 import {
-  deleteCheckout,
   getCheckout,
-  updateCheckout,
 } from "../../Redux/ActionCreators/CheckoutActionCreators";
 import { Link } from "react-router-dom";
 export default function AdminCheckout() {
@@ -20,21 +18,13 @@ export default function AdminCheckout() {
   let dispatch = useDispatch();
   let CheckoutStateData = useSelector((state) => state.CheckoutStateData);
 
-  function getAPIData() {
-    dispatch(getCheckout());
+  useEffect(() => { dispatch(getCheckout()); }, [dispatch]);
 
-    if (CheckoutStateData.length) setData(CheckoutStateData);
-    else setData([]);
-
-    let time = setTimeout(() => {
-      $("#DataTable").DataTable();
-    }, 500);
-    return time;
-  }
   useEffect(() => {
-    let time = getAPIData();
-    return () => clearTimeout(time);
-  }, [CheckoutStateData.length]);
+    setData(CheckoutStateData);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => clearTimeout(timer);
+  }, [CheckoutStateData]);
 
   return (
     <>
@@ -112,7 +102,7 @@ export default function AdminCheckout() {
 // export default function AdminCheckout() {
 //   let [data, setData] = useState([])
 
-//   async function getAPIData() {
+//   async function dispatch(getCheckout()); {
 //     let response = await fetch(`${process.env.REACT_APP_SERVER}/checkout`, {
 //       method: "GET",
 //       headers: {
@@ -131,7 +121,7 @@ export default function AdminCheckout() {
 //     return time
 //   }
 //   useEffect(() => {
-//     let time = getAPIData()
+//     let time = dispatch(getCheckout());
 //     return () => clearTimeout(time)
 //   }, [])
 

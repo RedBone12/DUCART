@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import HeroSection from "../Components/HeroSection";
 import Products from "../Components/Products";
@@ -53,7 +53,7 @@ export default function ShopPage() {
     );
   }
 
-  function applyFilter(nextMc, nextSc, nextBr, minAmount = -1, maxAmount = -1) {
+  const applyFilter = useCallback((nextMc, nextSc, nextBr, minAmount = -1, maxAmount = -1) => {
     let data = ProductStateData.filter((item) => item.active);
 
     if (nextMc !== "All") {
@@ -77,7 +77,7 @@ export default function ShopPage() {
     }
 
     setProducts(data);
-  }
+  }, [ProductStateData]);
 
   function postSearch(e) {
     e.preventDefault();
@@ -147,7 +147,7 @@ export default function ShopPage() {
     setBr(nextBr);
     setSearch("");
     applyFilter(nextMc, nextSc, nextBr);
-  }, [ProductStateData, searchQuery]);
+  }, [applyFilter, searchQuery]);
 
   useEffect(() => {
     setMaincategory(MaincategoryStateData.filter((item) => item.active));

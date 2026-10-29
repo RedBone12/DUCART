@@ -68,6 +68,7 @@ export default function SingleProductPage() {
 
     if (!item) {
       item = {
+        productId: data.id,
         product: data.name,
         name: data.name,
         brand: data.brand,
@@ -347,13 +348,13 @@ export default function SingleProductPage() {
                             className="btn btn-primary w-100"
                             onClick={addToCart}
                           >
-                            <i className="fa fa-shopping-cart"></i> Add to Cart
+                            <i className="fa fa-shopping-cart" aria-hidden="true"></i> Add to Cart
                           </button>
                           <button
                             className="btn btn-secondary w-100"
                             onClick={addToWishlist}
                           >
-                            <i className="fa fa-heart"></i> Add to Wishlist
+                            <i className="fa fa-heart" aria-hidden="true"></i> Add to Wishlist
                           </button>
                         </div>
                       </div>

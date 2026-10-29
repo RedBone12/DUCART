@@ -1,6 +1,7 @@
 package com.prashant.api.ecom.ducart.security;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +23,9 @@ import java.util.List;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+        @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}")
+        private List<String> allowedOrigins;
 
         private final JwtAuthenticationFilter jwtFilter;
         private final JsonAuthenticationEntryPoint authenticationEntryPoint;
@@ -59,10 +63,10 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(List.of("http://localhost:3000"));
+                config.setAllowedOrigins(allowedOrigins);
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
-                config.setAllowCredentials(true);
+                config.setAllowCredentials(false);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", config);
@@ -82,9 +86,10 @@ public class SecurityConfig {
                                                 .authenticationEntryPoint(authenticationEntryPoint)
                                                 .accessDeniedHandler(accessDeniedHandler))
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                                                 .requestMatchers("/user/login").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/user").permitAll()
-                                                .requestMatchers(HttpMethod.PUT, "/user/forgot-password").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/user/forgot-password", "/user/reset-password").permitAll()
                                                 .requestMatchers("/uploads/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/product/**", "/brand/**", "/maincategory/**",

@@ -80,13 +80,11 @@ export default function AdminUpdateTestimonial() {
     }
   }
 
+  useEffect(() => { dispatch(getTestimonial()); }, [dispatch]);
   useEffect(() => {
-    (() => {
-      dispatch(getTestimonial())
-      if (TestimonialStateData.length)
-        setData(TestimonialStateData.find((x) => String(x.id) === String(id)))
-    })()
-  }, [TestimonialStateData.length])
+    const item = TestimonialStateData.find((entry) => String(entry.id) === String(id));
+    if (item) setData(item);
+  }, [TestimonialStateData, id]);
   return (
     <>
       <HeroSection title="Admin" />
@@ -113,7 +111,7 @@ export default function AdminUpdateTestimonial() {
               <div className="row">
                 <div className="col-md-6 mb-3">
                   <label>Pic*</label>
-                  <input type="file" name="pic" onChange={getInputData} className={`form-control border-3 ${show && errorMessage.pic ? 'border-danger' : 'border-primary'}`} placeholder='Testimonial Name' />
+                  <input type="file" name="pic" aria-label="Catalog picture" onChange={getInputData} className={`form-control border-3 ${show && errorMessage.pic ? 'border-danger' : 'border-primary'}`} placeholder='Testimonial Name' />
                   {show && errorMessage.pic ? <p className='text-danger text-capitalize'>{errorMessage.pic}</p> : null}
                 </div>
 

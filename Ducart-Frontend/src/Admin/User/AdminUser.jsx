@@ -21,7 +21,7 @@ export default function AdminUser() {
           },
         }
       );
-      response = await response.json();
+      await response.json();
       getAPIData();
     }
   }

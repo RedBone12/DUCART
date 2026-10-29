@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
-import com.prashant.api.ecom.ducart.modal.ForgotPasswordDTO;
 import com.prashant.api.ecom.ducart.exception.BadRequestException;
 import com.prashant.api.ecom.ducart.exception.ConflictException;
 
@@ -132,35 +131,6 @@ public class UserService {
         String savedPic = FileUploadUtil.save(pic, "users");
         if (savedPic != null)
             user.setPic(savedPic);
-        return userRepo.save(user);
-    }
-
-    public User resetPassword(ForgotPasswordDTO dto) {
-        if (dto == null) {
-            throw new BadRequestException("Password reset data is required");
-        }
-
-        if (dto.getUsernameOrEmail() == null || dto.getUsernameOrEmail().isBlank()) {
-            throw new BadRequestException("Username or email is required");
-        }
-
-        if (dto.getPhone() == null || dto.getPhone().isBlank()) {
-            throw new BadRequestException("Phone number is required");
-        }
-
-        if (dto.getNewPassword() == null || dto.getNewPassword().isBlank()) {
-            throw new BadRequestException("New password is required");
-        }
-
-        User user = userRepo.findByUsername(dto.getUsernameOrEmail())
-                .orElseGet(() -> userRepo.findByEmail(dto.getUsernameOrEmail())
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found")));
-
-        if (!user.getPhone().equals(dto.getPhone())) {
-            throw new BadRequestException("Phone number does not match this account");
-        }
-
-        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         return userRepo.save(user);
     }
 

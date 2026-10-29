@@ -36,13 +36,8 @@ export default function Testimonial() {
         }
     }
 
-    useEffect(() => {
-        (() => {
-            dispatch(getTestimonial())
-            if (TestimonialStateData.length)
-                setData(TestimonialStateData.filter((x) => x.active))
-        })()
-    }, [TestimonialStateData.length])
+    useEffect(() => { dispatch(getTestimonial()); }, [dispatch]);
+    useEffect(() => { setData(TestimonialStateData.filter((item) => item.active)); }, [TestimonialStateData]);
     return (
         <>
             <div className="container-xxl py-2">
@@ -53,7 +48,7 @@ export default function Testimonial() {
                             {
                                 data?.map((item) => {
                                     return <div key={item.id} className="testimonial-item text-center">
-                                        <img className="img-fluid rounded-circle border border-2 p-2 mx-auto mb-4" src={`${process.env.REACT_APP_SERVER}${item.pic}`} style={{ width: "100px", height: "100px" }} />
+                                        <img alt={item.name} className="img-fluid rounded-circle border border-2 p-2 mx-auto mb-4" src={`${process.env.REACT_APP_SERVER}${item.pic}`} style={{ width: "100px", height: "100px" }} />
                                         <div className="testimonial-text rounded text-center p-4">
                                             <p className='testimonial-message'>{item.message}</p>
                                             <h5 className="mb-1">{item.name}</h5>

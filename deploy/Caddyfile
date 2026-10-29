@@ -1,0 +1,40 @@
+{
+    auto_https disable_redirects
+}
+
+http://{$SITE_HOST}:80 {
+    redir {$PUBLIC_ORIGIN}{uri} 308
+}
+
+https://{$SITE_HOST}:443 {
+    {$TLS_DIRECTIVE}
+    header X-Content-Type-Options nosniff
+    header Referrer-Policy strict-origin-when-cross-origin
+
+    @maintenance {
+        method POST PUT PATCH DELETE
+        file {
+            root /maintenance
+            try_files active
+        }
+    }
+    @management path /api/actuator /api/actuator/*
+    # Preserve ordering: maintenance must execute before the terminal proxy handlers.
+    route {
+        respond @maintenance "Temporarily unavailable during maintenance" 503
+        respond @management 404
+        handle /healthz {
+            rewrite * /actuator/health/readiness
+            reverse_proxy backend:8081
+        }
+        handle_path /api/* {
+            reverse_proxy backend:8080
+        }
+        handle /uploads/* {
+            reverse_proxy backend:8080
+        }
+        handle {
+            reverse_proxy frontend:80
+        }
+    }
+}

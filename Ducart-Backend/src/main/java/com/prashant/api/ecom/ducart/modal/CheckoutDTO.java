@@ -1,7 +1,7 @@
 package com.prashant.api.ecom.ducart.modal;
 
-import com.prashant.api.ecom.ducart.entities.Cart;
 import lombok.*;
+import java.math.BigDecimal;
 import java.util.*;
 
 @Data
@@ -13,10 +13,10 @@ public class CheckoutDTO {
     private String orderStatus;
     private String paymentMode;
     private String paymentStatus;
-    private Double subtotal;
-    private Double shipping;
-    private Double total;
+    private BigDecimal subtotal;
+    private BigDecimal shipping;
+    private BigDecimal total;
     private String date;
     private String rppid;
-    private List<Cart> products = new ArrayList<>();
+    private List<CheckoutLineDTO> products = new ArrayList<>();
 }

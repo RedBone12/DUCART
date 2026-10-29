@@ -6,7 +6,7 @@ Full-stack e-commerce application built with React, Spring Boot, MySQL, Docker, 
 
 [Open the frontend](https://redbone12.github.io/DUCART/). GitHub Pages hosts the frontend only; live catalogue data, authentication, and other API features require a separately deployed backend.
 
-In repository **Settings → Pages**, select **GitHub Actions** as the source. The workflow in `.github/workflows/pages.yml` installs frontend dependencies, builds React, and publishes `Ducart-Frontend/build` on frontend changes pushed to `main` (or a manual Actions run).
+In repository **Settings → Pages**, select **GitHub Actions** as the source. The workflow in `.github/workflows/quality.yml` checks every pull request and push to `main`. Pages publishing waits for all five quality, integration and recovery jobs, and deploys their verified build on `main`.
 
 The Pages build uses the repository base path for assets and hash routes (for example, `#/shop`) so refreshing a page works on static hosting. Local development keeps browser routes. If a backend is deployed later, set the repository Actions variable `REACT_APP_SERVER` to its HTTPS URL, allow the Pages origin in backend CORS, and rebuild. Never put secrets in frontend variables.
 
@@ -40,8 +40,11 @@ DUCART is a role-based online shopping platform with a React frontend, Spring Bo
 ### Engineering
 
 - JWT authentication and role-based authorisation
+- Expiring single-use password reset links, shared request limits, and password-free user responses ([local mail setup](docs/password-reset.md))
+- Server-calculated checkout totals, transactional inventory deductions, and idempotent order placement ([behavior and database upgrade](docs/checkout.md))
 - Jest and React Testing Library frontend tests
 - JUnit 5, Mockito, MockMvc, H2, and JaCoCo backend tests
+- Testcontainers MySQL integration tests and real Chromium purchase/admin journeys ([run locally](docs/integration-testing.md))
 - Multi-stage Docker builds and Docker Compose orchestration
 - Jenkins pipeline for testing, building, deployment, and smoke testing
 
@@ -101,6 +104,10 @@ docker compose --env-file .env.example up -d --build --wait
 ```
 
 ## CI/CD Pipeline
+
+GitHub Actions runs Checkstyle, SpotBugs, tests, coverage gates, ESLint and production builds. Backend coverage requires 90% lines and 80% branches; frontend coverage requires 90% lines, statements and functions, and 80% branches. See [quality commands, reports and branch rules](docs/quality-gates.md).
+
+Production deployment uses a separate Compose stack with Caddy HTTPS, private MySQL/backend ports, persistent storage and Flyway schema migrations. Cross-platform scripts perform verified deployments, consistent database/image/application backups, fresh-volume recovery and failed-release rollback. See [production deployment and recovery](docs/production-deployment.md). This configuration and its synthetic recovery drill do not imply a public cloud deployment or an installed backup timer.
 
 The root `Jenkinsfile` runs the project through the following stages:
 

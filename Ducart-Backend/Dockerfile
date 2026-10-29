@@ -3,12 +3,14 @@ FROM maven:3.9.16-eclipse-temurin-17 AS build
 WORKDIR /workspace
 
 COPY pom.xml .
-RUN mvn -B -DskipTests dependency:go-offline
-
+COPY config ./config
 COPY src ./src
-RUN mvn -B -DskipTests -Djacoco.skip=true clean package
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn --batch-mode --no-transfer-progress -DskipTests -Djacoco.skip=true clean package
 
 FROM eclipse-temurin:17.0.20_8-jre-alpine
+ARG RELEASE_ID=development
+LABEL org.opencontainers.image.revision=$RELEASE_ID
 
 WORKDIR /app
 

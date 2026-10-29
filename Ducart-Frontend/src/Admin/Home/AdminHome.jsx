@@ -1,7 +1,6 @@
 import React from "react";
 import Sidebar from "../../Components/Sidebar";
 import HeroSection from "../../Components/HeroSection";
-import { Link } from "react-router-dom";
 import Profile from "../../Components/Profile";
 
 // Admin Home Page

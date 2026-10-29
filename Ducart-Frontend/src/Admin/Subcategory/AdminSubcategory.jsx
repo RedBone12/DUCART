@@ -20,27 +20,17 @@ export default function AdminSubcategory() {
   function deleteRecord(id) {
     if (window.confirm("Are You Sure to Delete that Item : ")) {
       dispatch(deleteSubcategory({ id: id }))
-      getAPIData()
+      dispatch(getSubcategory());
     }
   }
 
-  function getAPIData() {
-    dispatch(getSubcategory())
+  useEffect(() => { dispatch(getSubcategory()); }, [dispatch]);
 
-    if (SubcategoryStateData.length)
-      setData(SubcategoryStateData)
-    else
-      setData([])
-
-    let time = setTimeout(() => {
-      $('#DataTable').DataTable()
-    }, 500);
-    return time
-  }
   useEffect(() => {
-    let time = getAPIData()
-    return () => clearTimeout(time)
-  }, [SubcategoryStateData.length])
+    setData(SubcategoryStateData);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => clearTimeout(timer);
+  }, [SubcategoryStateData]);
 
   return (
     <>
@@ -71,7 +61,7 @@ export default function AdminSubcategory() {
                       <td>{item.name}</td>
                       <td>
                         <Link to={`${process.env.REACT_APP_SERVER}${item.pic}`} target='_blank' rel='noreferrer'>
-                          <img src={`${process.env.REACT_APP_SERVER}${item.pic}`} height={50} width={80} className='rounded' alt="Subcategory Image" />
+                          <img src={`${process.env.REACT_APP_SERVER}${item.pic}`} height={50} width={80} className='rounded' alt="Subcategory" />
                         </Link>
                       </td>
                       <td>{item.active ? "Yes" : "No"}</td>
@@ -115,11 +105,11 @@ export default function AdminSubcategory() {
 //         }
 //       })
 //       response = await response.json()
-//       getAPIData()
+//       dispatch(getSubcategory());
 //     }
 //   }
 
-//   async function getAPIData() {
+//   async function dispatch(getSubcategory()); {
 //     let response = await fetch(`${process.env.REACT_APP_SERVER}/subcategory`, {
 //       method: "GET",
 //       headers: {
@@ -138,7 +128,7 @@ export default function AdminSubcategory() {
 //     return time
 //   }
 //   useEffect(() => {
-//     let time = getAPIData()
+//     let time = dispatch(getSubcategory());
 //     return () => clearTimeout(time)
 //   }, [])
 

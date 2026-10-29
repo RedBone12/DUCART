@@ -20,27 +20,17 @@ export default function AdminTestimonial() {
   function deleteRecord(id) {
     if (window.confirm("Are You Sure to Delete that Item : ")) {
       dispatch(deleteTestimonial({ id: id }))
-      getAPIData()
+      dispatch(getTestimonial());
     }
   }
 
-  function getAPIData() {
-    dispatch(getTestimonial())
+  useEffect(() => { dispatch(getTestimonial()); }, [dispatch]);
 
-    if (TestimonialStateData.length)
-      setData(TestimonialStateData)
-    else
-      setData([])
-
-    let time = setTimeout(() => {
-      $('#DataTable').DataTable()
-    }, 500);
-    return time
-  }
   useEffect(() => {
-    let time = getAPIData()
-    return () => clearTimeout(time)
-  }, [TestimonialStateData.length])
+    setData(TestimonialStateData);
+    const timer = setTimeout(() => { $("#DataTable").DataTable(); }, 500);
+    return () => clearTimeout(timer);
+  }, [TestimonialStateData]);
 
   return (
     <>
@@ -77,7 +67,7 @@ export default function AdminTestimonial() {
                       </td>
                       <td>
                         <Link to={`${process.env.REACT_APP_SERVER}${item.pic}`} target='_blank' rel='noreferrer'>
-                          <img src={`${process.env.REACT_APP_SERVER}${item.pic}`} height={50} width={80} className='rounded' alt="Testimonial Image" />
+                          <img src={`${process.env.REACT_APP_SERVER}${item.pic}`} height={50} width={80} className='rounded' alt="Testimonial" />
                         </Link>
                       </td>
                       <td>{item.active ? "Yes" : "No"}</td>
@@ -121,11 +111,11 @@ export default function AdminTestimonial() {
 //         }
 //       })
 //       response = await response.json()
-//       getAPIData()
+//       dispatch(getTestimonial());
 //     }
 //   }
 
-//   async function getAPIData() {
+//   async function dispatch(getTestimonial()); {
 //     let response = await fetch(`${process.env.REACT_APP_SERVER}/testimonial`, {
 //       method: "GET",
 //       headers: {
@@ -144,7 +134,7 @@ export default function AdminTestimonial() {
 //     return time
 //   }
 //   useEffect(() => {
-//     let time = getAPIData()
+//     let time = dispatch(getTestimonial());
 //     return () => clearTimeout(time)
 //   }, [])
 
