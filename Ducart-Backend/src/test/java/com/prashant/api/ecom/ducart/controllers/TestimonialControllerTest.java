@@ -63,9 +63,9 @@ class TestimonialControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
-    /*
-     * 这里测试 TestimonialController：公开查询、Admin 创建/更新/删除、
-     * multipart 和 JSON 两种请求、DTO 校验，以及 Service 抛出的 404。
+/*
+     * Verify public queries, administrator writes, multipart/JSON DTO validation
+     * and service-level not-found responses.
      */
     private TestimonialDTO testimonialDTO(
             String name,

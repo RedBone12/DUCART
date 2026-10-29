@@ -58,11 +58,9 @@ class LoginControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
-    /*
-     * 这里测试 LoginController：空字段校验、AuthenticationManager 是否被调用、username/email
-     * 两种登录查找路径、
-     * JwtService 是否生成 token，以及登录失败时是否返回正确状态码。真正的密码比对由 Spring Security 负责，不在
-     * ControllerTest 里测。
+/*
+     * Verify required fields, authentication delegation, username/email lookup,
+     * JWT issuance and failed-login responses. Spring Security owns password comparison.
      */
     private LoginDTO loginDTO(String username, String password) {
         return new LoginDTO(username, password);

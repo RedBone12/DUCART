@@ -54,22 +54,22 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<!--执行器 帮助监视和管理应用程序 -->
+			<!-- Actuator monitoring and application management. -->
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<!--为用数据库而准备好的依赖组合-->
+			<!-- Database access with Spring Data JPA. -->
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<!--用注解自动检查用户输入 / 数据是否合法的工具包-->
+			<!-- Annotation-based request validation. -->
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<!--用于构建Web应用程序，包括使用Spring MVC的RESTful应用程序。它使用Tomcat作为默认的嵌入式容器。-->
+			<!-- Spring MVC web support with embedded Tomcat. -->
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>

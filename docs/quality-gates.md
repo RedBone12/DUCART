@@ -14,7 +14,7 @@ required-check names are `Backend quality`, `Frontend quality`, `MySQL integrati
 | Jest | At least 90% statements, lines and functions; 80% branches |
 | Frontend build | Production build succeeds with CI=true |
 | MySQL integration | Real MySQL query, constraint, checkout, JWT and Flyway migration tests; separate coverage report |
-| Browser E2E | Three Chromium journeys against real Spring Boot and MySQL |
+| Browser E2E | Four Chromium journeys against real Spring Boot and MySQL |
 | Deployment recovery | Real HTTPS stack, persistent purchase/image, outage readiness, backup validation, fresh-volume restore and rollback |
 
 JaCoCo has no package exclusions. Its standard generated-bytecode filters still
@@ -59,8 +59,11 @@ coverage table below records the original 25 October baseline.
 
 The production update adds two production-origin CORS tests and a MySQL Flyway
 migration/validation test. A concurrency regression also ensures fresh password
-reset limit buckets cannot merge over another request's counter. The expanded
-suites contain 476 backend tests and 38 MySQL integration tests. The recovery job
+reset limit buckets cannot merge over another request's counter. That production
+baseline recorded 476 backend tests and 38 MySQL integration tests.
+These are historical counts, not the size of the current suites. The catalogue
+update adds combined-search and pagination tests and a fourth browser journey.
+See [PR CI evidence](ci-evidence.md) for a successful run on that revision. The recovery job
 separately executes real deployment and storage drills;
 its report distinguishes local TLS verification from a public cloud deployment.
 
@@ -86,19 +89,23 @@ incomplete item after a setter failure.
 
 ## Pull requests and publishing
 
-Configure main to require a pull request and all five checks, with the branch
-up to date before merging. Apply the rules to administrators too, and disallow
-force pushes and branch deletion. Zero approval reviews are required so a solo
-maintainer can merge a reviewed change without needing a second account.
+Verified in GitHub repository settings on 29 October 2026: main requires a pull
+request, all five checks from GitHub Actions, an up-to-date branch and resolved
+conversations before merging. Administrators cannot bypass these settings;
+force pushes and branch deletion are disabled. Approval reviews are not required,
+so a solo maintainer can merge after inspecting a change and passing the checks.
+See [PR CI evidence](ci-evidence.md) for the settings link and successful run.
 
 The old pages.yml workflow is replaced by quality.yml. On main, the frontend
 job creates the Pages artifact. Publishing depends on all five test and quality jobs succeeding. Pull requests run the same quality commands but never deploy.
 No CI=false or lint-disable environment override is used.
 
 Jenkinsfile invokes the same Maven command and frontend lint, coverage and build
-commands. This does not prove a Jenkins server has executed the pipeline. The
-repository webhook audit on 25 October 2026 found zero hooks; GitHub Actions
-supplies the required PR checks without a Jenkins webhook. A future Jenkins
-integration should provide its own verified run rather than duplicate this claim.
+commands. This is an optional Windows-host pipeline definition, without verified
+Jenkins server execution, Multibranch discovery or webhook delivery evidence.
+GitHub Actions supplies the active required PR checks through its native
+pull_request trigger; a Jenkins webhook is not needed for that implementation.
+Do not describe Actions runs as Jenkins runs. If Jenkins is adopted later, verify
+its own controller, webhook deliveries, PR discovery and published build status.
 
 For isolated database and browser commands, scope and reports, see [integration testing](integration-testing.md).

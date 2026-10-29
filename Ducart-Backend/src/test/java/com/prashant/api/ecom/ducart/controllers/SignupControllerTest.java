@@ -68,9 +68,8 @@ class SignupControllerTest {
     private JwtService jwtService;
 
     /*
-     * 这里测试 SignupController 层：注册时是否使用 SignupDTO/SignupResponseDTO、不返回
-     * password、权限控制、authentication.details 是否能控制“只能访问自己”，以及 forgot-password、profile
-     * multipart update、admin update/delete 的状态码。a
+     * Verify signup DTOs, password omission, ownership and role restrictions,
+     * password recovery, multipart profile updates and administrator write responses.
      */
     private SignupDTO signupDTO() {
         SignupDTO dto = new SignupDTO();

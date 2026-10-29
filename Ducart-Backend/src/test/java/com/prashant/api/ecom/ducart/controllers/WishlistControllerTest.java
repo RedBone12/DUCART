@@ -55,9 +55,9 @@ class WishlistControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
-    /*
-     * WishlistController 当前直接调用 WishlistRepo。
-     * 这里测试权限、当前用户写入、本人收藏查询和删除权限。
+/*
+     * Verify authorization, authenticated ownership, personal wishlist queries
+     * and deletion permissions.
      */
     private Wishlist wishlist(Long id, String user, String product) {
         Wishlist wishlist = new Wishlist();

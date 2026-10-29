@@ -1,6 +1,6 @@
 # DUCART
 
-Full-stack e-commerce application built with React, Spring Boot, MySQL, Docker, and Jenkins.
+Full-stack e-commerce application built with React, Spring Boot, MySQL and Docker, with verified GitHub Actions PR checks.
 
 ## GitHub Pages frontend
 
@@ -15,11 +15,11 @@ The Pages build uses the repository base path for assets and hash routes (for ex
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Jenkins](https://img.shields.io/badge/CI%2FCD-Jenkins-D24939?logo=jenkins&logoColor=white)](https://www.jenkins.io/)
+[![Quality](https://github.com/RedBone12/DUCART/actions/workflows/quality.yml/badge.svg)](https://github.com/RedBone12/DUCART/actions/workflows/quality.yml)
 
 ## Overview
 
-DUCART is a role-based online shopping platform with a React frontend, Spring Boot REST API, and MySQL database. The project includes automated frontend and backend testing, containerised local deployment, persistent data storage, and a Jenkins CI/CD pipeline.
+DUCART is a role-based online shopping platform with a React frontend, Spring Boot REST API, and MySQL database. The project includes automated frontend and backend testing, containerised local deployment, persistent data storage, required GitHub Actions PR checks and an optional Jenkins pipeline definition.
 
 ## Features
 
@@ -46,7 +46,7 @@ DUCART is a role-based online shopping platform with a React frontend, Spring Bo
 - JUnit 5, Mockito, MockMvc, H2, and JaCoCo backend tests
 - Testcontainers MySQL integration tests and real Chromium purchase/admin journeys ([run locally](docs/integration-testing.md))
 - Multi-stage Docker builds and Docker Compose orchestration
-- Jenkins pipeline for testing, building, deployment, and smoke testing
+- Verified GitHub Actions PR checks, with an optional Jenkins pipeline definition
 
 ## Technology Stack
 
@@ -56,7 +56,7 @@ DUCART is a role-based online shopping platform with a React frontend, Spring Bo
 | Backend | Java 17, Spring Boot 3.5, Spring Security, JWT, Spring Data JPA, Hibernate |
 | Database | MySQL 8.4, H2 for tests |
 | Testing | Jest, React Testing Library, JUnit 5, Mockito, MockMvc, JaCoCo |
-| DevOps | Docker, Docker Compose, Nginx, Jenkins |
+| DevOps | Docker, Docker Compose, Caddy, Nginx, GitHub Actions; optional Jenkins definition |
 
 ## Quick Start
 
@@ -107,9 +107,11 @@ docker compose --env-file .env.example up -d --build --wait
 
 GitHub Actions runs Checkstyle, SpotBugs, tests, coverage gates, ESLint and production builds. Backend coverage requires 90% lines and 80% branches; frontend coverage requires 90% lines, statements and functions, and 80% branches. See [quality commands, reports and branch rules](docs/quality-gates.md).
 
+Main requires all five Actions checks before merging, including real MySQL integration, four Chromium journeys and deployment recovery. See [verified PR runs and branch protection](docs/ci-evidence.md). PRs run checks without deploying; Pages publishing on main waits for all five jobs. GitHub Actions handles PR events directly without a Jenkins webhook.
+
 Production deployment uses a separate Compose stack with Caddy HTTPS, private MySQL/backend ports, persistent storage and Flyway schema migrations. Cross-platform scripts perform verified deployments, consistent database/image/application backups, fresh-volume recovery and failed-release rollback. See [production deployment and recovery](docs/production-deployment.md). This configuration and its synthetic recovery drill do not imply a public cloud deployment or an installed backup timer.
 
-The root `Jenkinsfile` runs the project through the following stages:
+The optional root `Jenkinsfile` defines the following Windows-host stages; no Jenkins execution is claimed:
 
 ```text
 Checkout
@@ -120,7 +122,7 @@ Checkout
   -> Smoke Test
 ```
 
-Catalogue seeding is an explicit local setup step (`database/catalog-seed.sql`), not an automatic deployment stage. The current deployment targets Docker Desktop on the Jenkins host. The smoke test verifies that the frontend and product API respond successfully.
+Catalogue seeding is an explicit local setup step (`database/catalog-seed.sql`), not an automatic deployment stage. If run on Jenkins, this definition targets Docker Desktop on that host and checks frontend and product API HTTP responses. It is separate from the verified GitHub Actions PR pipeline.
 
 ## Architecture and catalogue search
 
@@ -135,6 +137,6 @@ DUCART/
 |-- database/           Local catalogue seed script
 |-- .env.example        Local configuration template
 |-- compose.yaml        Docker Compose services and volumes
-|-- Jenkinsfile         CI/CD pipeline
+|-- Jenkinsfile         Optional Windows-host pipeline definition
 `-- README.md           Project documentation
 ```

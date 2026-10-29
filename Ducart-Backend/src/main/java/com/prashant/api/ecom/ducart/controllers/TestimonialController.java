@@ -41,8 +41,8 @@ public class TestimonialController {
     }
 
     /*
-     * multipart 和 JSON 请求现在统一使用 TestimonialDTO 和 TestimonialService。
-     * Controller 只处理请求解析、DTO 校验和 HTTP 响应，数据库和图片逻辑交给 Service。
+     * Use TestimonialDTO and TestimonialService for multipart and JSON requests.
+     * Delegate persistence and images; keep parsing, DTO validation and HTTP responses here.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TestimonialResponseDTO> createMultipart(

@@ -48,9 +48,9 @@ class SubcategoryServiceTest {
     @InjectMocks
     private SubcategoryService subcategoryService;
 
-    /*
-     * 这份测试对应重构后的 SubcategoryService：SubcategoryDTO 不再包含 pic；
-     * 图片来自 MultipartFile；删除 subcategory 前会检查 Product 表里是否还有商品使用这个 subcategory。
+/*
+     * Verify multipart images instead of DTO picture fields and product-reference
+     * checks before deleting a subcategory.
      */
     private Subcategory subcategory(Long id, String name, boolean active) {
         Subcategory subcategory = new Subcategory();
