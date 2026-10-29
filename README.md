@@ -117,11 +117,14 @@ Checkout
   -> Frontend Test
   -> Docker Build
   -> Deploy
-  -> Seed Catalog
   -> Smoke Test
 ```
 
-The current deployment targets Docker Desktop on the Jenkins host. The smoke test verifies that the frontend and product API respond successfully.
+Catalogue seeding is an explicit local setup step (`database/catalog-seed.sql`), not an automatic deployment stage. The current deployment targets Docker Desktop on the Jenkins host. The smoke test verifies that the frontend and product API respond successfully.
+
+## Architecture and catalogue search
+
+The shop uses database pagination and combines keyword, category, subcategory, brand, price range and sort order in a single request. See [architecture, API contract and troubleshooting](docs/architecture.md).
 
 ## Project Structure
 

@@ -189,7 +189,7 @@ public class ProductService {
         return FileUploadUtil.saveAll(files, "products");
     }
 
-    private ProductResponseDTO toResponseDTO(Product product) {
+    ProductResponseDTO toResponseDTO(Product product) {
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
