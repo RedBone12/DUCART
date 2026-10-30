@@ -58,10 +58,8 @@ class CheckoutControllerTest {
     private JwtService jwtService;
 
     /*
-     * 这里测试 CheckoutController 层：权限、路径、当前登录用户是否写入 dto.user、Controller 自己的下单校验，以及
-     * Service 抛出的 404 是否能正确返回。
-     * 真正的实体转换、productsJson 存取和数据库操作属于 CheckoutServiceTest，因为 CheckoutService 负责把
-     * CheckoutDTO 和 Checkout 实体互相转换。
+     * Verify routes, authorization, checkout validation and error responses.
+     * Service tests cover entity conversion, order snapshots and persistence.
      */
     private CheckoutLineDTO cartItem(String product, Integer qty, Integer stockQuantity) {
         CheckoutLineDTO cart = new CheckoutLineDTO();

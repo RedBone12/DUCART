@@ -26,7 +26,8 @@ public class Product {
     private Double finalPrice;
     private boolean stock;
 
-    @Lob
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.LONGVARCHAR)
+    @Column(length = Integer.MAX_VALUE)
     private String description;
 
     private Integer stockQuantity;

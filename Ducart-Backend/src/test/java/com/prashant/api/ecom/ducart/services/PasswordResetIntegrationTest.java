@@ -164,7 +164,7 @@ class PasswordResetIntegrationTest {
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Invalid request body"));
         confirm("invalid", "ReplacementPassword123").andExpect(status().isBadRequest());
         confirm(token, "short").andExpect(status().isBadRequest());
-        confirm(token, "界".repeat(25)).andExpect(status().isBadRequest());
+        confirm(token, "\u20ac".repeat(25)).andExpect(status().isBadRequest());
         assertFalse(tokens.findById(buyer.getUserid()).orElseThrow().isUsed());
     }
 

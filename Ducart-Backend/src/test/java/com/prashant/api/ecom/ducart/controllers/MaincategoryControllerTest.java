@@ -59,10 +59,9 @@ class MaincategoryControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
-    /*
-     * 这里测试 MaincategoryController 层：GET 是否公开、Admin 才能创建/更新/删除、multipart data 是否能转成
-     * MaincategoryDTO、
-     * DTO 校验是否生效，以及 MaincategoryService 抛出的 404/409 是否能变成正确 HTTP status。
+/*
+     * Verify public reads, administrator writes, multipart DTO parsing and validation,
+     * and HTTP mapping of service-level not-found and conflict exceptions.
      */
     private MaincategoryDTO maincategoryDTO(String name, Boolean active) {
         MaincategoryDTO dto = new MaincategoryDTO();

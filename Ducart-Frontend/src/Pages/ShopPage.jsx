@@ -1,165 +1,76 @@
-import React, { useCallback, useEffect, useState } from "react";
-
+import React, { useEffect, useState } from "react";
 import HeroSection from "../Components/HeroSection";
 import Products from "../Components/Products";
-
-import { getProduct } from "../Redux/ActionCreators/ProductActionCreators";
 import { getMaincategory } from "../Redux/ActionCreators/MaincategoryActionCreators";
 import { getSubcategory } from "../Redux/ActionCreators/SubcategoryActionCreators";
 import { getBrand } from "../Redux/ActionCreators/BrandActionCreators";
-
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 export default function ShopPage() {
-  const [products, setProducts] = useState([]);
-  const [maincategory, setMaincategory] = useState([]);
-  const [subcategory, setSubcategory] = useState([]);
-  const [brand, setBrand] = useState([]);
-
-  const [mc, setMc] = useState("All");
-  const [sc, setSc] = useState("All");
-  const [br, setBr] = useState("All");
-
-  const [search, setSearch] = useState("");
-  const [min, setMin] = useState(0);
-  const [max, setMax] = useState(1200);
-
+  const [query, setQuery] = useSearchParams();
+  const queryString = query.toString();
+  const [search, setSearch] = useState(query.get("q") || "");
+  const [min, setMin] = useState(query.get("min") || "");
+  const [max, setMax] = useState(query.get("max") || "");
+  const [result, setResult] = useState({ content: [], totalElements: 0, totalPages: 0, page: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
   const dispatch = useDispatch();
-  const searchQuery = useLocation().search;
+  const maincategory = useSelector(state => state.MaincategoryStateData).filter(item => item.active);
+  const subcategory = useSelector(state => state.SubcategoryStateData).filter(item => item.active);
+  const brand = useSelector(state => state.BrandStateData).filter(item => item.active);
+  const products = result.content;
 
-  const ProductStateData = useSelector((state) => state.ProductStateData);
-  const MaincategoryStateData = useSelector(
-    (state) => state.MaincategoryStateData,
-  );
-  const SubcategoryStateData = useSelector(
-    (state) => state.SubcategoryStateData,
-  );
-  const BrandStateData = useSelector((state) => state.BrandStateData);
-
-  const safeValue = (value) => (value && value.trim() ? value : "All");
-  const shopUrl = (nextMc = "All", nextSc = "All", nextBr = "All") =>
-    `/shop?mc=${encodeURIComponent(nextMc)}&sc=${encodeURIComponent(nextSc)}&br=${encodeURIComponent(nextBr)}`;
-
-  function matchesSearch(item, keyword) {
-    const q = keyword.toLocaleLowerCase();
-    return (
-      item.name?.toLocaleLowerCase().includes(q) ||
-      item.maincategory?.toLocaleLowerCase().includes(q) ||
-      item.subcategory?.toLocaleLowerCase().includes(q) ||
-      item.brand?.toLocaleLowerCase().includes(q) ||
-      item.color?.toLocaleLowerCase().includes(q) ||
-      item.description?.toLocaleLowerCase().includes(q)
-    );
+  function shopUrl(key, value) {
+    const next = new URLSearchParams(query);
+    next.delete("page");
+    if (value === "All") next.delete(key); else next.set(key, value);
+    return "/shop?" + next.toString();
   }
-
-  const applyFilter = useCallback((nextMc, nextSc, nextBr, minAmount = -1, maxAmount = -1) => {
-    let data = ProductStateData.filter((item) => item.active);
-
-    if (nextMc !== "All") {
-      data = data.filter((item) => item.maincategory === nextMc);
-    }
-
-    if (nextSc !== "All") {
-      data = data.filter((item) => item.subcategory === nextSc);
-    }
-
-    if (nextBr !== "All") {
-      data = data.filter((item) => item.brand === nextBr);
-    }
-
-    if (minAmount !== -1 && maxAmount !== -1) {
-      const minValue = Number(minAmount);
-      const maxValue = Number(maxAmount);
-      data = data.filter(
-        (item) => item.finalPrice >= minValue && item.finalPrice <= maxValue,
-      );
-    }
-
-    setProducts(data);
-  }, [ProductStateData]);
-
-  function postSearch(e) {
-    e.preventDefault();
-
-    if (!search.trim()) {
-      applyFilter(mc, sc, br);
-      return;
-    }
-
-    setProducts(
-      ProductStateData.filter(
-        (item) => item.active && matchesSearch(item, search),
-      ),
-    );
+  function update(values) {
+    setError("");
+    const next = new URLSearchParams(query);
+    next.delete("page");
+    Object.entries(values).forEach(([key, value]) => {
+      if (value === "") next.delete(key); else next.set(key, value);
+    });
+    setQuery(next);
   }
-
-  function postPriceFilter(e) {
-    e.preventDefault();
-
-    if (search.trim()) {
-      setProducts(
-        ProductStateData.filter(
-          (item) => item.active && matchesSearch(item, search),
-        ).filter(
-          (item) =>
-            item.finalPrice >= Number(min) && item.finalPrice <= Number(max),
-        ),
-      );
-    } else {
-      applyFilter(mc, sc, br, min, max);
-    }
+  function postSearch(event) {
+    event.preventDefault(); update({ q: search.trim() });
   }
-
-  function applySortFilter(option) {
-    let sortedProducts = [...products];
-
-    if (option === "1") {
-      sortedProducts.sort((x, y) => Number(y.id) - Number(x.id));
-    } else if (option === "2") {
-      sortedProducts.sort(
-        (x, y) => Number(y.finalPrice) - Number(x.finalPrice),
-      );
-    } else {
-      sortedProducts.sort(
-        (x, y) => Number(x.finalPrice) - Number(y.finalPrice),
-      );
+  function postPriceFilter(event) {
+    event.preventDefault();
+    if (min !== "" && max !== "" && Number(min) > Number(max)) {
+      setError("Minimum price must not exceed maximum price"); return;
     }
-
-    setProducts(sortedProducts);
+    update({ min, max, q: search.trim() });
   }
-
+  function goPage(page) {
+    const next = new URLSearchParams(query);
+    next.set("page", String(page)); setQuery(next);
+  }
   useEffect(() => {
-    dispatch(getProduct());
-    dispatch(getMaincategory());
-    dispatch(getSubcategory());
-    dispatch(getBrand());
+    dispatch(getMaincategory()); dispatch(getSubcategory()); dispatch(getBrand());
   }, [dispatch]);
-
   useEffect(() => {
-    const query = new URLSearchParams(searchQuery);
-    const nextMc = safeValue(query.get("mc"));
-    const nextSc = safeValue(query.get("sc"));
-    const nextBr = safeValue(query.get("br"));
-
-    setMc(nextMc);
-    setSc(nextSc);
-    setBr(nextBr);
-    setSearch("");
-    applyFilter(nextMc, nextSc, nextBr);
-  }, [applyFilter, searchQuery]);
-
-  useEffect(() => {
-    setMaincategory(MaincategoryStateData.filter((item) => item.active));
-  }, [MaincategoryStateData]);
-
-  useEffect(() => {
-    setSubcategory(SubcategoryStateData.filter((item) => item.active));
-  }, [SubcategoryStateData]);
-
-  useEffect(() => {
-    setBrand(BrandStateData.filter((item) => item.active));
-  }, [BrandStateData]);
+    const current = new URLSearchParams(queryString);
+    setSearch(current.get("q") || ""); setMin(current.get("min") || ""); setMax(current.get("max") || "");
+    const controller = new AbortController();
+    setLoading(true); setError("");
+    fetch(process.env.REACT_APP_SERVER + "/product/search?" + queryString, { signal: controller.signal })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Unable to load products");
+        return data;
+      })
+      .then(data => { if (!controller.signal.aborted) setResult(data); })
+      .catch(failure => { if (!controller.signal.aborted) setError(failure.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [queryString, retry]);
 
   return (
     <>
@@ -169,15 +80,9 @@ export default function ShopPage() {
         <div className="row">
           <div className="col-md-2">
             <div className="list-group mb-3">
+              <div className="list-group-item bg-primary text-white">Maincategory</div>
               <Link
-                to={shopUrl("All", "All", "All")}
-                className="list-group-item list-group-item-action active"
-                aria-current="true"
-              >
-                Maincategory
-              </Link>
-              <Link
-                to={shopUrl("All", "All", "All")}
+                to={shopUrl("mc", "All")}
                 className="list-group-item list-group-item-action"
               >
                 All
@@ -185,8 +90,9 @@ export default function ShopPage() {
               {maincategory?.map((item) => (
                 <Link
                   key={item.id}
-                  to={shopUrl(item.name, "All", "All")}
-                  className="list-group-item list-group-item-action"
+                  to={shopUrl("mc", item.name)}
+                  aria-current={query.get("mc") === item.name ? "true" : undefined}
+                  className={"list-group-item list-group-item-action" + (query.get("mc") === item.name ? " active" : "")}
                 >
                   {item.name}
                 </Link>
@@ -194,15 +100,9 @@ export default function ShopPage() {
             </div>
 
             <div className="list-group mb-3">
+              <div className="list-group-item bg-primary text-white">Subcategory</div>
               <Link
-                to={shopUrl("All", "All", "All")}
-                className="list-group-item list-group-item-action active"
-                aria-current="true"
-              >
-                Subcategory
-              </Link>
-              <Link
-                to={shopUrl("All", "All", "All")}
+                to={shopUrl("sc", "All")}
                 className="list-group-item list-group-item-action"
               >
                 All
@@ -210,8 +110,9 @@ export default function ShopPage() {
               {subcategory?.map((item) => (
                 <Link
                   key={item.id}
-                  to={shopUrl("All", item.name, "All")}
-                  className="list-group-item list-group-item-action"
+                  to={shopUrl("sc", item.name)}
+                  aria-current={query.get("sc") === item.name ? "true" : undefined}
+                  className={"list-group-item list-group-item-action" + (query.get("sc") === item.name ? " active" : "")}
                 >
                   {item.name}
                 </Link>
@@ -219,15 +120,9 @@ export default function ShopPage() {
             </div>
 
             <div className="list-group mb-3">
+              <div className="list-group-item bg-primary text-white">Brand</div>
               <Link
-                to={shopUrl("All", "All", "All")}
-                className="list-group-item list-group-item-action active"
-                aria-current="true"
-              >
-                Brand
-              </Link>
-              <Link
-                to={shopUrl("All", "All", "All")}
+                to={shopUrl("br", "All")}
                 className="list-group-item list-group-item-action"
               >
                 All
@@ -235,8 +130,9 @@ export default function ShopPage() {
               {brand?.map((item) => (
                 <Link
                   key={item.id}
-                  to={shopUrl("All", "All", item.name)}
-                  className="list-group-item list-group-item-action"
+                  to={shopUrl("br", item.name)}
+                  aria-current={query.get("br") === item.name ? "true" : undefined}
+                  className={"list-group-item list-group-item-action" + (query.get("br") === item.name ? " active" : "")}
                 >
                   {item.name}
                 </Link>
@@ -250,10 +146,13 @@ export default function ShopPage() {
               <form onSubmit={postPriceFilter}>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label>Min Amount</label>
+                    <label htmlFor="min-price">Min Amount</label>
                     <input
                       type="number"
+                      min="0"
+                      step="0.01"
                       name="min"
+                      id="min-price"
                       onChange={(e) => setMin(e.target.value)}
                       className="form-control border-3 border-primary"
                       value={min}
@@ -261,10 +160,13 @@ export default function ShopPage() {
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label>Max Amount</label>
+                    <label htmlFor="max-price">Max Amount</label>
                     <input
                       type="number"
+                      min="0"
+                      step="0.01"
                       name="max"
+                      id="max-price"
                       onChange={(e) => setMax(e.target.value)}
                       className="form-control border-3 border-primary"
                       value={max}
@@ -288,6 +190,8 @@ export default function ShopPage() {
                   <div className="btn-group w-100">
                     <input
                       type="search"
+                      maxLength={200}
+                      aria-label="Product keyword"
                       name="search"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -308,17 +212,21 @@ export default function ShopPage() {
               <div className="col-md-3">
                 <select
                   name="sort"
-                  onChange={(e) => applySortFilter(e.target.value)}
+                  value={query.get("sort") || "latest"}
+                  aria-label="Sort products"
+                  onChange={(e) => update({ sort: e.target.value })}
                   className="form-select border-3 border-primary"
                 >
-                  <option value="1">Latest</option>
-                  <option value="2">Price: High to Low</option>
-                  <option value="3">Price: Low to High</option>
+                  <option value="latest">Latest</option>
+                  <option value="priceDesc">Price: High to Low</option>
+                  <option value="priceAsc">Price: Low to High</option>
                 </select>
               </div>
             </div>
 
-            {products.length > 0 ? (
+            {loading ? <p role="status">Loading products...</p> : error ? (
+              <div role="alert">{error} <button onClick={() => setRetry(value => value + 1)}>Retry</button></div>
+            ) : products.length > 0 ? (
               <Products data={products} title="Shop" />
             ) : (
               <div className="text-center py-5">
@@ -327,13 +235,18 @@ export default function ShopPage() {
                   Try another category, brand, search term, or price range.
                 </p>
                 <Link
-                  to={shopUrl("All", "All", "All")}
+                  to={"/shop"}
                   className="btn btn-primary"
                 >
                   Show All Products
                 </Link>
               </div>
             )}
+            {!loading && !error && <nav aria-label="Product pages" className="d-flex gap-3 align-items-center my-3">
+              <button className="btn btn-outline-primary" disabled={result.page === 0} onClick={() => goPage(result.page - 1)}>Previous</button>
+              <span>{result.totalElements} products · Page {result.page + 1} of {Math.max(1, result.totalPages)}</span>
+              <button className="btn btn-outline-primary" disabled={result.page + 1 >= result.totalPages} onClick={() => goPage(result.page + 1)}>Next</button>
+            </nav>}
           </div>
         </div>
       </div>

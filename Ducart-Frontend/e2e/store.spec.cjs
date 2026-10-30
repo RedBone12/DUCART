@@ -117,3 +117,40 @@ test("a buyer cannot use administrator pages or product-write APIs", async ({ pa
   });
   expect(blocked.status()).toBe(403);
 });
+
+test("catalogue combines filters, sorts across pages and survives refresh", async ({ page, request }) => {
+  const auth = await request.post(api + "/user/login", { data: { username: "e2e-admin", password: "BrowserAdmin123!" } });
+  expect(auth.status()).toBe(200);
+  const { token } = await auth.json();
+  const headers = { Authorization: "Bearer " + token };
+  const prefix = "Paged " + randomUUID().slice(0, 8);
+  const ids = [];
+  try {
+    for (let i = 0; i < 14; i++) {
+      const created = await request.post(api + "/product", { headers, multipart: { data: JSON.stringify({
+        name: prefix + " " + i, maincategory: "BrowserCategory", subcategory: "BrowserSubcategory",
+        brand: "BrowserBrand", color: "Blue", size: "M", basePrice: 10 + i, discount: 0,
+        description: "Paginated blue shoes", stockQuantity: 5, stock: true, active: true,
+      }) } });
+      expect(created.status()).toBe(201); ids.push((await created.json()).id);
+    }
+    await page.goto("/shop?q=" + encodeURIComponent(prefix) + "&mc=BrowserCategory&sc=BrowserSubcategory&br=BrowserBrand&min=10&max=23&sort=priceAsc");
+    await expect(page.getByText("14 products · Page 1 of 2", { exact: true })).toBeVisible();
+    await expect(page.locator(".card h6")).toHaveText(Array.from({ length: 12 }, (_, i) => prefix + " " + i));
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page.getByText("14 products · Page 2 of 2", { exact: true })).toBeVisible();
+    await expect(page.locator(".card h6")).toHaveText([prefix + " 12", prefix + " 13"]);
+    await expect(page.getByRole("button", { name: "Next", exact: true })).toBeDisabled();
+    await page.reload();
+    await expect(page.locator(".card h6")).toHaveText([prefix + " 12", prefix + " 13"]);
+    await page.getByRole("combobox").selectOption("priceDesc");
+    await expect(page.getByText("14 products · Page 1 of 2", { exact: true })).toBeVisible();
+    await expect(page.locator(".card h6").first()).toHaveText(prefix + " 13");
+    await expect(page).toHaveURL(/br=BrowserBrand/);
+    await page.getByRole("searchbox").fill(prefix + " missing");
+    await page.getByRole("button", { name: "Search products" }).click();
+    await expect(page.getByText("No products found", { exact: true })).toBeVisible();
+  } finally {
+    for (const id of ids) await request.delete(api + "/product/" + id, { headers });
+  }
+});

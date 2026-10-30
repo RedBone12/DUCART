@@ -24,7 +24,7 @@ function submitCredentials(username = "buyer", password = "buyer123") {
   });
   fireEvent.click(screen.getByRole("button", { name: "Login" }));
 }
-//describe用来把相关测试分成一组
+// Group related tests with describe.
 describe("Login", () => {
   beforeEach(() => {
     localStorage.clear();

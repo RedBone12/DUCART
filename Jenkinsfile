@@ -47,12 +47,6 @@ pipeline {
                 bat 'docker compose -p ducart_resume_ready --env-file .env.example ps'
             }
         }
-        
-        stage('Seed Catalog') {
-    steps {
-        bat 'docker compose -p ducart_resume_ready --env-file .env.example exec -T mysql sh -c "mysql -u$MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE" < database/catalog-seed.sql'
-    }
-}
 
         stage('Smoke Test') {
             steps {

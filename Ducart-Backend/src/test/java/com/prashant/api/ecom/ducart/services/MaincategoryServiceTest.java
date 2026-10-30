@@ -48,9 +48,9 @@ class MaincategoryServiceTest {
     @InjectMocks
     private MaincategoryService maincategoryService;
 
-    /*
-     * 这份测试对应重构后的 MaincategoryService：MaincategoryDTO 不再包含 pic；
-     * 图片来自 MultipartFile；删除 main category 前会检查 Product 表里是否还有商品使用这个 maincategory。
+/*
+     * Verify multipart images instead of DTO picture fields and product-reference
+     * checks before deleting a main category.
      */
     private Maincategory maincategory(Long id, String name, boolean active) {
         Maincategory maincategory = new Maincategory();

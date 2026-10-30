@@ -43,9 +43,9 @@ class TestimonialServiceTest {
     @InjectMocks
     private TestimonialService testimonialService;
 
-    /*
-     * 这里测试重构后的 TestimonialService：DTO/Entity 转换、默认 active、
-     * JSON pic URL、更新时保留旧图片，以及找不到资源时的 404 异常。
+/*
+     * Verify DTO/entity conversion, default activation, JSON image URLs,
+     * image retention during updates and not-found exceptions.
      */
     private Testimonial testimonial(
             Long id,

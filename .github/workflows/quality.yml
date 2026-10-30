@@ -141,7 +141,7 @@ jobs:
       - name: Build the isolated browser-test frontend
         run: npm run e2e:build
         working-directory: Ducart-Frontend
-      - name: Chromium purchase, administrator CRUD and access-control journeys
+      - name: Chromium purchase, administrator CRUD, access control and catalogue pagination
         run: npm run test:e2e
         working-directory: Ducart-Frontend
       - name: Upload browser report and failure traces

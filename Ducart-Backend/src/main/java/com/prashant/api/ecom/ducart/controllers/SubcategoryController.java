@@ -40,8 +40,8 @@ public class SubcategoryController {
     }
 
     /*
-     * Controller 只负责解析 multipart 里的 data、执行 DTO 校验、调用 SubcategoryService。
-     * 删除前检查商品引用、图片保存、实体转换都放在 Service 里。
+     * Parse multipart data, validate the DTO and delegate to SubcategoryService.
+     * The service owns reference checks, image storage and entity conversion.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SubcategoryResponseDTO> create(
